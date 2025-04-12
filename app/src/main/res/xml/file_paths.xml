@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Grant access to files in all external storage directories -->
+    <external-path name="external_files" path="." />
+    
+    <!-- Grant access to app-specific directories -->
+    <external-files-path name="external_files" path="." />
+    <files-path name="internal_files" path="." />
+    
+    <!-- Grant access to cache directory -->
+    <cache-path name="cache" path="." />
+    
+    <!-- Grant access to external storage root -->
+    <root-path name="root" path="." />
+</paths> 
