@@ -46,12 +46,12 @@ jobs:
 
       - name: Get version from tag
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Rename APK
         run: |
           mkdir -p artifacts
-          cp app/build/outputs/apk/release/fbs.apk artifacts/fbs-${{ steps.get_version.outputs.VERSION }}.apk
+          cp app/build/outputs/apk/release/fbs.apk artifacts/fbs-${{ env.VERSION }}.apk
 
       - name: Create Release
         id: create_release
@@ -60,7 +60,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          release_name: Release ${{ env.VERSION }}
           draft: false
           prerelease: false
 
@@ -70,12 +70,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/fbs-${{ steps.get_version.outputs.VERSION }}.apk
-          asset_name: fbs-${{ steps.get_version.outputs.VERSION }}.apk
+          asset_path: ./artifacts/fbs-${{ env.VERSION }}.apk
+          asset_name: fbs-${{ env.VERSION }}.apk
           asset_content_type: application/vnd.android.package-archive
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Release APK
-          path: artifacts/fbs-${{ steps.get_version.outputs.VERSION }}.apk 
+          path: artifacts/fbs-${{ env.VERSION }}.apk 
