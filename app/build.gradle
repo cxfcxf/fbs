@@ -10,7 +10,7 @@ android {
         applicationId "com.cxfcxf.androidtvfileserver"
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 0
+        versionCode 1
         versionName "1.0"
     }
     
