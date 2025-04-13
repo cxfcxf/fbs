@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android TV File Server</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <h1>Android TV File Server</h1>
+    <p>Current Directory: ${currentDir}</p>
+    
+    <div class="upload-area" id="dropArea">
+        <p>Drag & drop files here or click to select files</p>
+        <input type="file" id="fileInput" style="display: none;" multiple>
+        <button class="upload-button" id="uploadButton">Choose Files</button>
+        <div class="upload-status" id="uploadStatus"></div>
+    </div>
+    
+    <div class="file-list" id="fileList">
+        <!-- Files will be loaded here -->
+    </div>
+    
+    <script src="/scripts.js"></script>
+</body>
+</html> 
