@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -53,26 +55,18 @@ jobs:
           mkdir -p artifacts
           cp app/build/outputs/apk/release/fbs.apk artifacts/fbs-${{ env.VERSION }}.apk
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ env.VERSION }}
-          draft: false
-          prerelease: false
+      - name: Setup GitHub CLI
+        uses: cli/setup-gh@v1
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+      - name: Create Release and Upload APK
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/fbs-${{ env.VERSION }}.apk
-          asset_name: fbs-${{ env.VERSION }}.apk
-          asset_content_type: application/vnd.android.package-archive
+        run: |
+          # Create release
+          gh release create ${{ env.VERSION }} \
+            --title "Release ${{ env.VERSION }}" \
+            --notes "Android TV File Server Release ${{ env.VERSION }}" \
+            artifacts/fbs-${{ env.VERSION }}.apk
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
