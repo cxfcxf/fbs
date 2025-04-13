@@ -1,8 +1,9 @@
 name: Build and Publish Release APK
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*'
 
 # Add permissions to allow release asset uploads
 permissions:
@@ -43,21 +44,38 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
       - name: Rename APK
         run: |
           mkdir -p artifacts
-          cp app/build/outputs/apk/release/fbs.apk artifacts/fbs-${{ github.event.release.tag_name }}.apk
+          cp app/build/outputs/apk/release/fbs.apk artifacts/fbs-${{ steps.get_version.outputs.VERSION }}.apk
 
-      - name: Upload APK to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: artifacts/fbs-${{ github.event.release.tag_name }}.apk
-          tag_name: ${{ github.event.release.tag_name }}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/fbs-${{ steps.get_version.outputs.VERSION }}.apk
+          asset_name: fbs-${{ steps.get_version.outputs.VERSION }}.apk
+          asset_content_type: application/vnd.android.package-archive
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Release APK
-          path: artifacts/fbs-${{ github.event.release.tag_name }}.apk 
+          path: artifacts/fbs-${{ steps.get_version.outputs.VERSION }}.apk 
