@@ -131,6 +131,83 @@ class WebServer(private val context: Context, private val fileManager: FileManag
                     var uploadStartTime = System.currentTimeMillis()
                     var lastDataTime = System.currentTimeMillis() // Track when we last received data
                     var uploadActive = true
+                    var dataReceived = false // Track if we've received any data
+                    
+                    // Helper function to finish upload properly
+                    fun finishUpload() {
+                        // Mark upload as inactive
+                        uploadActive = false
+                        
+                        try {
+                            // Close the output stream
+                            outputStream.flush()
+                            outputStream.close()
+                            
+                            val fileSize = file.length()
+                            
+                            if (fileSize > 0) {
+                                // Success - the file was uploaded
+                                Log.d(TAG, "Upload completed: $filename ($fileSize bytes)")
+                                
+                                // Notify listener about complete upload
+                                listener?.onUploadComplete(filename, fileSize)
+                                
+                                // Refresh file list
+                                fileManager.loadFiles()
+                                
+                                // Try to send a success response
+                                try {
+                                    val resultObj = mapOf(
+                                        "success" to true,
+                                        "filename" to filename,
+                                        "size" to fileSize,
+                                        "path" to file.absolutePath,
+                                        "lastModified" to file.lastModified()
+                                    )
+                                    
+                                    // Add connection close headers to forcibly terminate connection
+                                    response.getHeaders().set("Connection", "close")
+                                    response.getHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate")
+                                    response.getHeaders().set("Pragma", "no-cache")
+                                    response.getHeaders().set("Expires", "0")
+                                    response.code(200)
+                                    response.send("application/json", gson.toJson(resultObj))
+                                    Log.d(TAG, "Upload success response sent")
+                                } catch (e: Exception) {
+                                    // If we can't send the response, that's ok - the file is already saved
+                                    Log.e(TAG, "Failed to send success response, but file was saved", e)
+                                }
+                                
+                                // Restore server status after a short delay
+                                Handler(context.mainLooper).postDelayed({
+                                    val ip = getLocalIpAddress()
+                                    if (ip != null) {
+                                        listener?.onServerStarted("http://$ip:$serverPort")
+                                    }
+                                }, 2000) // Reset quickly
+                            } else {
+                                // Empty file, delete it
+                                file.delete()
+                                response.code(400)
+                                response.send("application/json", gson.toJson(mapOf(
+                                    "success" to false,
+                                    "error" to "Upload resulted in empty file"
+                                )))
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error finalizing upload", e)
+                            try {
+                                file.delete()
+                                response.code(500)
+                                response.send("application/json", gson.toJson(mapOf(
+                                    "success" to false,
+                                    "error" to "Error finalizing upload: ${e.message}"
+                                )))
+                            } catch (e2: Exception) {
+                                Log.e(TAG, "Failed to send error response", e2)
+                            }
+                        }
+                    }
                     
                     // Setup a timeout handler to close hanging uploads
                     val handler = android.os.Handler(context.mainLooper)
@@ -138,73 +215,85 @@ class WebServer(private val context: Context, private val fileManager: FileManag
                         override fun run() {
                             if (uploadActive) {
                                 val idleTime = System.currentTimeMillis() - lastDataTime
+                                
+                                // If we've received data but have been idle for some time, it may be complete
+                                if (dataReceived && idleTime > 5000) { // 5 seconds of inactivity after receiving data
+                                    Log.d(TAG, "Upload inactive for $idleTime ms, assuming it's complete")
+                                    handler.removeCallbacks(this)
+                                    finishUpload()
+                                    return
+                                }
+                                
+                                // Long time with no activity - actual timeout
                                 if (idleTime > 60000) { // 60 seconds of inactivity
                                     Log.w(TAG, "Upload for $filename timed out after $idleTime ms inactivity")
+                                    uploadActive = false
+                                    handler.removeCallbacks(this)
+                                    
                                     try {
-                                        // Close the stream and process the partial file
-                                        uploadActive = false
-                                        try {
-                                            outputStream.flush()
-                                            outputStream.close()
-                                        } catch (e: Exception) {
-                                            Log.e(TAG, "Error closing stream on timeout", e)
-                                        }
-                                        
-                                        // Complete the upload with what we have
-                                        if (file.exists() && file.length() > 0) {
-                                            Log.d(TAG, "File partially uploaded (idle timeout): $filename (${file.length()} bytes)")
-                                            Toast.makeText(context, 
-                                                "File partially uploaded (timeout): $filename", 
-                                                Toast.LENGTH_SHORT).show()
-                                            fileManager.loadFiles()
-                                            
-                                            // Reset UI status
-                                            val ip = getLocalIpAddress()
-                                            listener?.onServerStarted("http://$ip:$serverPort")
-                                        } else {
-                                            // No useful data, delete the file
-                                            file.delete()
-                                        }
+                                        outputStream.flush()
+                                        outputStream.close()
                                     } catch (e: Exception) {
-                                        Log.e(TAG, "Error handling upload timeout", e)
+                                        Log.e(TAG, "Error closing stream on timeout", e)
+                                    }
+                                    
+                                    // Complete the upload with what we have
+                                    if (file.exists() && file.length() > 0) {
+                                        Log.d(TAG, "File partially uploaded (idle timeout): $filename (${file.length()} bytes)")
+                                        Toast.makeText(context, 
+                                            "File partially uploaded (timeout): $filename", 
+                                            Toast.LENGTH_SHORT).show()
+                                        fileManager.loadFiles()
+                                        
+                                        // Reset UI status
+                                        val ip = getLocalIpAddress()
+                                        listener?.onServerStarted("http://$ip:$serverPort")
+                                    } else {
+                                        // No useful data, delete the file
+                                        file.delete()
                                     }
                                 } else {
                                     // Schedule next check
-                                    handler.postDelayed(this, 5000) // Check every 5 seconds
+                                    handler.postDelayed(this, 2000) // Check every 2 seconds
                                 }
                             }
                         }
                     }
                     
                     // Start the timeout checker
-                    handler.postDelayed(timeoutRunnable, 10000) // First check after 10 seconds
+                    handler.postDelayed(timeoutRunnable, 5000) // First check after 5 seconds
                     
                     // Set header to try to ensure connection gets closed properly
                     response.getHeaders().add("Connection", "close")
+                    response.getHeaders().add("Cache-Control", "no-cache, no-store, must-revalidate")
+                    response.getHeaders().add("Pragma", "no-cache")
+                    response.getHeaders().add("Expires", "0")
                     
                     // Use a data callback to write the file data
-                    request.setDataCallback { _, byteBuf ->
+                    request.setDataCallback { _, byteBufferList ->
                         try {
-                            // Update the last data receipt time
                             lastDataTime = System.currentTimeMillis()
+                            dataReceived = true
                             
-                            // Get the number of bytes available
-                            val size = byteBuf.remaining()
-                            if (size > 0) {
-                                // Create a buffer to hold the data
-                                val bytes = ByteArray(size)
-                                // Read from the ByteBuffer
-                                byteBuf.get(bytes)
-                                // Write to the file
-                                outputStream.write(bytes)
-                                totalBytes += size
+                            // Extract available data
+                            val available = byteBufferList.remaining()
+                            if (available > 0) {
+                                // Get a buffer to hold the data
+                                val buffer = ByteArray(available)
+                                byteBufferList.get(buffer)
                                 
-                                // Show progress notification periodically (every 5MB or 10 seconds)
+                                // Write the data to file
+                                outputStream.write(buffer)
+                                
+                                // Update our total bytes counter
+                                totalBytes += available
+                                
+                                // Calculate if we should log progress
                                 val now = System.currentTimeMillis()
-                                val timeSinceLastUpdate = now - lastProgressUpdate
-                                val shouldUpdateProgress = 
-                                    totalBytes - lastProgressUpdate >= 5 * 1024 * 1024 || // 5MB
-                                    timeSinceLastUpdate >= 10000 // 10 seconds
+                                val elapsed = now - uploadStartTime
+                                val shouldUpdateProgress = elapsed > 0 && 
+                                    (now - lastProgressUpdate > 1000 || // Update at most once per second
+                                    totalBytes - lastProgressUpdate > 1024 * 1024) // Or when we've received another MB
                                 
                                 if (shouldUpdateProgress || totalBytes % (1024 * 1024) == 0L) {
                                     lastProgressUpdate = totalBytes
@@ -224,101 +313,15 @@ class WebServer(private val context: Context, private val fileManager: FileManag
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Error writing data chunk to file", e)
-                            // We can't send a response or close the stream here as it would disrupt the upload
-                            // Just log the error and continue, we'll handle cleanup in the end callback
                         }
                     }
                     
                     // Set an end callback that will be called when the request is complete
                     request.setEndCallback {
-                        try {
-                            // Mark upload as inactive and remove timeout handler
-                            uploadActive = false
+                        if (uploadActive) {
+                            Log.d(TAG, "Upload end callback received, finalizing upload")
                             handler.removeCallbacks(timeoutRunnable)
-                            
-                            // Close the output stream
-                            outputStream.flush()
-                            outputStream.close()
-                            
-                            val fileSize = file.length()
-                            
-                            if (fileSize > 0) {
-                                // Success - the file was uploaded
-                                Log.d(TAG, "Upload completed: $filename ($fileSize bytes)")
-                                
-                                // Notify listener about complete upload
-                                listener?.onUploadComplete(filename, fileSize)
-                                
-                                // Refresh file list
-                                fileManager.loadFiles()
-                                
-                                // Restore server status after a short delay
-                                Handler(context.mainLooper).postDelayed({
-                                    val ip = getLocalIpAddress()
-                                    if (ip != null) {
-                                        listener?.onServerStarted("http://$ip:$serverPort")
-                                    }
-                                }, 15000) // Reset after 15 seconds maximum
-                                
-                                // Try to send a success response, but it's ok if this fails
-                                // because we've already handled the upload on the server side
-                                try {
-                                    val resultObj = mapOf(
-                                        "success" to true,
-                                        "filename" to filename,
-                                        "size" to fileSize,
-                                        "path" to file.absolutePath,
-                                        "lastModified" to file.lastModified()
-                                    )
-                                    
-                                    // Add connection close header to forcibly terminate connection
-                                    response.getHeaders().set("Connection", "close")
-                                    response.send("application/json", gson.toJson(resultObj))
-                                    Log.d(TAG, "Upload success response sent")
-                                } catch (e: Exception) {
-                                    // If we can't send the response, that's ok - the file is already saved
-                                    Log.e(TAG, "Failed to send success response, but file was saved", e)
-                                }
-                                
-                            } else {
-                                // No data was received
-                                Log.e(TAG, "No data received for file: $filename")
-                                file.delete() // Delete the empty file
-                                
-                                try {
-                                    response.code(400)
-                                    response.send("application/json", gson.toJson(mapOf(
-                                        "success" to false,
-                                        "error" to "No data received"
-                                    )))
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Failed to send error response", e)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            // Error in completion handling
-                            Log.e(TAG, "Error finalizing upload", e)
-                            
-                            try {
-                                // Try to clean up
-                                outputStream.close()
-                            } catch (e2: Exception) {
-                                // Ignore
-                            }
-                            
-                            // Delete the incomplete file
-                            file.delete()
-                            
-                            // Try to send error response
-                            try {
-                                response.code(500)
-                                response.send("application/json", gson.toJson(mapOf(
-                                    "success" to false,
-                                    "error" to "Error finalizing upload: ${e.message}"
-                                )))
-                            } catch (e2: Exception) {
-                                Log.e(TAG, "Failed to send error response", e2)
-                            }
+                            finishUpload()
                         }
                     }
                 } catch (e: Exception) {

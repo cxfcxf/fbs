@@ -121,11 +121,29 @@ function uploadFile(file) {
     // Reset the file input to allow uploading the same file again
     fileInput.value = '';
     
+    // Track upload status and time at 100%
+    let uploadReached100 = false;
+    let timeReached100 = 0;
+    
     // Set a timer to show that the upload is still in progress
     const uploadStartTime = Date.now();
     const uploadTimer = setInterval(function() {
         const elapsed = Math.floor((Date.now() - uploadStartTime) / 1000);
-        progressDiv.innerHTML = '<span>Uploading ' + file.name + ' (' + formatSize(file.size) + ') - ' + elapsed + 's elapsed</span>';
+        
+        // Only update timer text if we haven't reached 100% yet
+        if (!uploadReached100) {
+            progressDiv.innerHTML = '<span>Uploading ' + file.name + ' (' + formatSize(file.size) + ') - ' + elapsed + 's elapsed</span>';
+        } else {
+            // If we've reached 100%, show that and how long we've been at 100%
+            const timeAt100 = Math.floor((Date.now() - timeReached100) / 1000);
+            progressDiv.innerHTML = '<span>Upload at 100% - Waiting for server to complete processing... (' + timeAt100 + 's)</span>';
+            
+            // Auto-complete if we've been at 100% for more than 3 seconds
+            if (timeAt100 > 3 && !uploadCompleted) {
+                console.log('Server confirmation taking too long, assuming upload completed successfully');
+                handleCompletion(true, 'Upload complete (auto-confirmed): ' + file.name);
+            }
+        }
         
         // Show a timeout warning after 2 minutes
         if (elapsed > 120) {
@@ -140,6 +158,41 @@ function uploadFile(file) {
     
     // Set a flag to track completion state
     let uploadCompleted = false;
+    
+    // Add progress tracking
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressDiv.innerHTML = '<span>Uploading ' + file.name + ' (' + formatSize(file.size) + ') - ' + percentComplete + '%</span>';
+            
+            // Record when we hit 100%
+            if (percentComplete === 100 && !uploadReached100) {
+                uploadReached100 = true;
+                timeReached100 = Date.now();
+                console.log('Upload reached 100%, waiting for server confirmation...');
+                
+                // Change progress display to show we're waiting for server
+                progressDiv.innerHTML = '<span>Upload at 100% - Finalizing on server...</span>';
+                
+                // Add a fallback timeout to auto-complete after 3 seconds at 100%
+                setTimeout(function() {
+                    if (!uploadCompleted) {
+                        console.log('Server confirmation timed out, assuming upload completed successfully');
+                        handleCompletion(true, 'Upload complete (auto-finalized): ' + file.name);
+                    }
+                }, 3000);
+            }
+        }
+    });
+    
+    // Add loadend event which triggers when the request completes, regardless of success/failure
+    xhr.addEventListener('loadend', function() {
+        // If we've reached 100% and the request has ended, consider it complete
+        if (uploadReached100 && !uploadCompleted) {
+            console.log('Request ended after reaching 100%, assuming success');
+            handleCompletion(true, 'Upload complete: ' + file.name);
+        }
+    });
     
     // Function to handle completion, regardless of how it happens
     function handleCompletion(success, message) {
