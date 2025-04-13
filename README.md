@@ -2,49 +2,6 @@
 
 An Android TV application that serves files over the network.
 
-## Automated GitHub Release Workflow
-
-This repository includes a GitHub Actions workflow to automate the building and publishing of APKs when a new release is created.
-
-### How to create a release
-
-1. Click on the "Releases" tab in your GitHub repository
-2. Click "Create a new release" or "Draft a new release"
-3. Enter a tag version (e.g., v1.0.0)
-4. Enter a release title and description
-5. Click "Publish release"
-
-The workflow will automatically:
-1. Build a signed release APK
-2. Rename the APK to include the version tag (e.g., fbs-v1.0.0.apk)
-3. Attach the APK to the GitHub release
-
-### Setting up signing for the automated build
-
-Before creating your first release, you need to set up APK signing in GitHub secrets:
-
-1. Generate a keystore file if you don't already have one:
-   ```bash
-   keytool -genkey -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias key0
-   ```
-
-2. Convert your keystore to base64:
-   ```bash
-   base64 keystore.jks | tr -d '\n' | pbcopy  # This will copy to clipboard on macOS
-   # For Linux, use: base64 keystore.jks | tr -d '\n'
-   ```
-
-3. Add the following secrets in your GitHub repository:
-   - `KEYSTORE_BASE64`: The base64-encoded keystore
-   - `KEYSTORE_PASSWORD`: Your keystore password
-   - `KEY_ALIAS`: Your key alias (e.g., key0)
-   - `KEY_PASSWORD`: Your key password
-
-To add secrets:
-1. Go to your repository on GitHub
-2. Click on "Settings" → "Secrets and variables" → "Actions"
-3. Click "New repository secret" to add each of the required secrets
-
 ## Features
 
 - Simple and TV-friendly file browsing interface
