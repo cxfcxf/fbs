@@ -28,9 +28,6 @@ class PermissionManager(private val context: Context) {
     }
     
     fun checkPermissions(requestPermissionLauncher: ActivityResultLauncher<Array<String>>) {
-        // Check if we're running on a TV device
-        val isTvDevice = context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
-        
         // For Android 11 (API 30) or higher, we need special handling for storage
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (Environment.isExternalStorageManager()) {

@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -65,6 +66,29 @@ class MainActivity : AppCompatActivity(),
         
         // Check permissions
         permissionManager.checkPermissions(requestPermissionLauncher)
+        
+        // Handle back button with the new API
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Handle back button press
+                val currentDir = fileManager.getCurrentDirectory()
+                val parent = currentDir.parentFile
+                
+                if (parent != null && fileManager.getCurrentDirectory().absolutePath != "/") {
+                    // If we can navigate up, do that instead of exiting
+                    fileManager.navigateToParentDirectory()
+                } else {
+                    // Otherwise handle back to exit
+                    if (backPressedTime + backToExitPressedInterval > System.currentTimeMillis()) {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Press back again to exit", Toast.LENGTH_SHORT).show()
+                        backPressedTime = System.currentTimeMillis()
+                    }
+                }
+            }
+        })
     }
 
     private fun initializeComponents() {
@@ -97,25 +121,6 @@ class MainActivity : AppCompatActivity(),
                 fileManager.setCurrentDirectory(Environment.getExternalStorageDirectory())
             } catch (e: Exception) {
                 Log.e(TAG, "Error accessing storage in onResume", e)
-            }
-        }
-    }
-    
-    override fun onBackPressed() {
-        // Handle back button press
-        val currentDir = fileManager.getCurrentDirectory()
-        val parent = currentDir.parentFile
-        
-        if (parent != null && fileManager.getCurrentDirectory().absolutePath != "/") {
-            // If we can navigate up, do that instead of exiting
-            fileManager.navigateToParentDirectory()
-        } else {
-            // Otherwise handle back to exit
-            if (backPressedTime + backToExitPressedInterval > System.currentTimeMillis()) {
-                super.onBackPressed()
-            } else {
-                Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show()
-                backPressedTime = System.currentTimeMillis()
             }
         }
     }

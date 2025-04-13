@@ -59,7 +59,7 @@ class UIManager(
     }
     
     fun updateUploadProgress(filename: String, totalBytes: Long, mbPerSecond: Double) {
-        binding.serverStatus.text = "Server Status: Receiving upload (${totalBytes / (1024 * 1024)} MB @ ${String.format("%.1f", mbPerSecond)} MB/s)"
+        binding.serverStatus.text = "Server Status: Receiving upload '${filename}' (${totalBytes / (1024 * 1024)} MB @ ${String.format("%.1f", mbPerSecond)} MB/s)"
     }
     
     private fun setupFileList() {
