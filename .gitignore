@@ -1,10 +1,11 @@
 # Gradle files
 .gradle/
 build/
-gradlew
-gradlew.bat
+# Allow Gradle wrapper
+#gradlew
+#gradlew.bat
+#gradle/
 local.properties
-gradle/
 
 # IntelliJ IDEA / Android Studio
 *.iml

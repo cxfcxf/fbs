@@ -4,10 +4,10 @@ plugins {
 }
 
 android {
-    namespace "com.example.androidtvfileserver"
+    namespace "com.cxfcxf.androidtvfileserver"
     compileSdkVersion 33
     defaultConfig {
-        applicationId "com.example.androidtvfileserver"
+        applicationId "com.cxfcxf.androidtvfileserver"
         minSdkVersion 21
         targetSdkVersion 33
         versionCode 1
@@ -32,6 +32,13 @@ android {
     
     lint {
         abortOnError false
+    }
+    
+    // Custom APK output filename
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "fbs.apk"
+        }
     }
 }
 

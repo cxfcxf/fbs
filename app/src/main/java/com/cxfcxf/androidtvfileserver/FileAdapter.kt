@@ -1,4 +1,4 @@
-package com.example.androidtvfileserver
+package com.cxfcxf.androidtvfileserver
 
 import android.graphics.Color
 import android.view.LayoutInflater
@@ -9,8 +9,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.androidtvfileserver.databinding.ItemFileBinding
-import com.example.androidtvfileserver.R
+import com.cxfcxf.androidtvfileserver.databinding.ItemFileBinding
+import com.cxfcxf.androidtvfileserver.R
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*

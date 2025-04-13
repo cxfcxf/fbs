@@ -1,4 +1,4 @@
-package com.example.androidtvfileserver
+package com.cxfcxf.androidtvfileserver
 
 import android.Manifest
 import android.content.Intent
@@ -19,7 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.androidtvfileserver.databinding.ActivityMainBinding
+import com.cxfcxf.androidtvfileserver.databinding.ActivityMainBinding
 import com.google.gson.Gson
 import com.koushikdutta.async.http.server.AsyncHttpServer
 import com.koushikdutta.async.http.server.AsyncHttpServerRequest
