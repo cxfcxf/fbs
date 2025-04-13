@@ -4,6 +4,11 @@ on:
   release:
     types: [created]
 
+# Add permissions to allow release asset uploads
+permissions:
+  contents: write
+  packages: read
+
 jobs:
   build:
     name: Build and Publish Release APK
