@@ -13,10 +13,23 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    
+    // Signing config that works with GitHub Actions
+    signingConfigs {
+        release {
+            // Use empty values for local builds or populate with env variables in CI
+            storeFile file(System.getenv("KEYSTORE_FILE") ?: "keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "android"
+            keyAlias System.getenv("KEY_ALIAS") ?: "key0"
+            keyPassword System.getenv("KEY_PASSWORD") ?: "android"
+        }
+    }
+    
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     buildFeatures {
