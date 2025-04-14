@@ -2,6 +2,8 @@
 
 An Android TV application that serves files over the network.
 
+English | [简体中文](README.zh-CN.md)
+
 ## Features
 
 - Simple and TV-friendly file browsing interface
@@ -36,9 +38,9 @@ An Android TV application that serves files over the network.
 
 ### Requirements
 
-- Android Studio Arctic Fox (2020.3.1) or newer
-- JDK 11 or newer
-- Android API 30+ SDK
+- Android Studio Iguana (2023.2.1) or newer
+- JDK 17 or newer
+- Android API 33+ SDK
 
 ### Building
 
@@ -48,9 +50,10 @@ An Android TV application that serves files over the network.
    ```
    ./gradlew assembleDebug
    ```
+   This will generate the APK at `app/build/outputs/apk/debug/fbs.apk`
 4. Install on a device:
    ```
-   adb install -r app/build/outputs/apk/debug/app-debug.apk
+   adb install -r app/build/outputs/apk/debug/fbs.apk
    ```
 
 ## License
