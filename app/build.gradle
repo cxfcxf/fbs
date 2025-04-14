@@ -10,8 +10,43 @@ android {
         applicationId "com.cxfcxf.androidtvfileserver"
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 1
-        versionName "1.0"
+        
+        // Dynamically set version information
+        // Get version from git tag if available, otherwise use default values
+        def gitVersionCode = { ->
+            try {
+                if (project.hasProperty('versionCode')) {
+                    return Integer.parseInt(project.property('versionCode'))
+                }
+                def stdout = new ByteArrayOutputStream()
+                exec {
+                    commandLine 'git', 'rev-list', '--count', 'HEAD'
+                    standardOutput = stdout
+                }
+                return Integer.parseInt(stdout.toString().trim())
+            } catch (ignored) {
+                return 1
+            }
+        }
+        
+        def gitVersionName = { ->
+            try {
+                if (project.hasProperty('versionName')) {
+                    return project.property('versionName')
+                }
+                def stdout = new ByteArrayOutputStream()
+                exec {
+                    commandLine 'git', 'describe', '--tags', '--abbrev=0'
+                    standardOutput = stdout
+                }
+                return stdout.toString().trim().replace("v", "")
+            } catch (ignored) {
+                return "1.0"
+            }
+        }
+        
+        versionCode gitVersionCode()
+        versionName gitVersionName()
     }
     
     // Signing config that works with GitHub Actions

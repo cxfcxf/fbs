@@ -38,19 +38,23 @@ jobs:
           echo "$ENCODED_KEYSTORE" | tr -d '\n' > keystore_b64
           base64 -d keystore_b64 > keystore.jks
           
-      - name: Build Release APK
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Ensure version information is correctly set
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease
+        run: |
+          CLEAN_VERSION=$(echo ${{ env.VERSION }} | sed 's/^v//')
+          VERSION_CODE=$(git rev-list --count HEAD)
+          echo "Using version name: $CLEAN_VERSION, version code: $VERSION_CODE"
+          ./gradlew -PversionName=$CLEAN_VERSION -PversionCode=$VERSION_CODE assembleRelease
 
-      - name: Get version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Rename APK
+      - name: Copy APK to artifacts
         run: |
           mkdir -p artifacts
           cp app/build/outputs/apk/release/fbs.apk artifacts/fbs-${{ env.VERSION }}.apk
