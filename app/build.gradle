@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace "com.cxfcxf.androidtvfileserver"
-    compileSdkVersion 33
+    compileSdkVersion 35
     defaultConfig {
         applicationId "com.cxfcxf.androidtvfileserver"
         minSdkVersion 21
-        targetSdkVersion 33
+        targetSdkVersion 35
         
         // Dynamically set version information
         // Get version from git tag if available, otherwise use default values
@@ -71,11 +71,11 @@ android {
         viewBinding true
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = '21'
     }
     
     lint {
