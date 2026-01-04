@@ -38,12 +38,21 @@ class FileManager(private val context: Context) {
         }
     }
     
+    // Base directory - don't allow navigation above this level
+    private val baseDir = "/storage/emulated/0"
+    
     fun navigateToParentDirectory() {
+        // Check if we're already at or above the base directory
+        if (currentDirectory.absolutePath == baseDir || !currentDirectory.absolutePath.startsWith("$baseDir/")) {
+            android.widget.Toast.makeText(context, "Already at the top level directory", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        
         val parent = currentDirectory.parentFile
-        if (parent != null) {
+        if (parent != null && parent.absolutePath.startsWith(baseDir)) {
             setCurrentDirectory(parent)
         } else {
-            listener?.onError("Cannot navigate to parent directory")
+            android.widget.Toast.makeText(context, "Cannot navigate above $baseDir", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
     

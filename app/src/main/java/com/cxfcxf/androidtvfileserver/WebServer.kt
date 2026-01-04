@@ -62,29 +62,55 @@ class WebServer(private val context: Context, private val fileManager: FileManag
                 response.send(js)
             }
             
-            // List files as JSON
-            get("/api/files") { _: AsyncHttpServerRequest, response: AsyncHttpServerResponse ->
-                val files = fileManager.getCurrentDirectory().listFiles()?.map { 
-                    mapOf(
-                        "name" to it.name,
-                        "isDirectory" to it.isDirectory,
-                        "size" to it.length(),
-                        "lastModified" to it.lastModified()
-                    )
-                } ?: emptyList()
+            // List files as JSON - accepts optional path parameter for web UI independence
+            get("/api/files") { request: AsyncHttpServerRequest, response: AsyncHttpServerResponse ->
+                val baseDir = "/storage/emulated/0"
+                val requestedPath = request.query?.getString("path")
+                
+                // Use requested path if provided, otherwise use FileManager's current directory
+                val targetDir = if (requestedPath != null && requestedPath.startsWith(baseDir)) {
+                    File(requestedPath)
+                } else {
+                    fileManager.getCurrentDirectory()
+                }
+                
+                val files = if (targetDir.exists() && targetDir.isDirectory) {
+                    targetDir.listFiles()?.map { 
+                        mapOf(
+                            "name" to it.name,
+                            "isDirectory" to it.isDirectory,
+                            "size" to it.length(),
+                            "lastModified" to it.lastModified()
+                        )
+                    } ?: emptyList()
+                } else {
+                    emptyList()
+                }
                 
                 response.send("application/json", gson.toJson(files))
             }
             
-            // Handle directory navigation
+            // Handle directory navigation - web UI independent, doesn't change TV UI state
             get("/navigate") { request: AsyncHttpServerRequest, response: AsyncHttpServerResponse ->
                 val dirPath = request.query?.getString("path")
+                val baseDir = "/storage/emulated/0"
                 
                 if (dirPath != null) {
                     val targetDir = File(dirPath)
                     
+                    // Security check: don't allow navigation above base directory
+                    if (!targetDir.absolutePath.startsWith(baseDir)) {
+                        response.code(403)
+                        response.send("application/json", gson.toJson(mapOf(
+                            "success" to false, 
+                            "error" to "Cannot navigate above $baseDir"
+                        )))
+                        return@get
+                    }
+                    
                     if (targetDir.exists() && targetDir.isDirectory) {
-                        fileManager.setCurrentDirectory(targetDir)
+                        // Don't change FileManager state - just validate and return the path
+                        // Web UI maintains its own currentDir in JavaScript
                         response.send("application/json", gson.toJson(mapOf("success" to true, "path" to targetDir.absolutePath)))
                     } else {
                         response.code(404)
@@ -132,6 +158,14 @@ class WebServer(private val context: Context, private val fileManager: FileManag
                     var lastDataTime = System.currentTimeMillis() // Track when we last received data
                     var uploadActive = true
                     var dataReceived = false // Track if we've received any data
+                    
+                    // Get expected content length from request headers for proper completion detection
+                    val contentLength = try {
+                        request.headers["Content-Length"]?.toLongOrNull() ?: -1L
+                    } catch (e: Exception) {
+                        -1L
+                    }
+                    Log.d(TAG, "Expected content length: $contentLength bytes")
                     
                     // Helper function to finish upload properly
                     fun finishUpload() {
@@ -288,6 +322,15 @@ class WebServer(private val context: Context, private val fileManager: FileManag
                                 // Update our total bytes counter
                                 totalBytes += available
                                 
+                                // Check if we've received all expected bytes (based on Content-Length)
+                                // This is the primary completion detection - don't wait for unreliable setEndCallback
+                                if (contentLength > 0 && totalBytes >= contentLength && uploadActive) {
+                                    Log.d(TAG, "Received all expected bytes ($totalBytes of $contentLength), completing upload")
+                                    handler.removeCallbacks(timeoutRunnable)
+                                    finishUpload()
+                                    return@setDataCallback
+                                }
+                                
                                 // Calculate if we should log progress
                                 val now = System.currentTimeMillis()
                                 val elapsed = now - uploadStartTime
@@ -305,7 +348,7 @@ class WebServer(private val context: Context, private val fileManager: FileManag
                                     else 
                                         0.0
                                     
-                                    Log.d(TAG, "Upload progress: ${totalBytes / (1024 * 1024)} MB so far (${String.format("%.2f", mbPerSecond)} MB/s)")
+                                    Log.d(TAG, "Upload progress: ${totalBytes / (1024 * 1024)} MB ($totalBytes bytes) of $contentLength (${String.format("%.2f", mbPerSecond)} MB/s)")
                                     
                                     // Notify listener about progress
                                     listener?.onUploadProgress(filename, totalBytes, mbPerSecond)
