@@ -72,13 +72,17 @@ class MainActivity : AppCompatActivity(),
             override fun handleOnBackPressed() {
                 // Handle back button press
                 val currentDir = fileManager.getCurrentDirectory()
-                val parent = currentDir.parentFile
+                val baseDir = "/storage/emulated/0"
                 
-                if (parent != null && fileManager.getCurrentDirectory().absolutePath != "/") {
+                // Check if we can navigate up (not at or above the base directory)
+                val canNavigateUp = currentDir.absolutePath != baseDir && 
+                                    currentDir.absolutePath.startsWith("$baseDir/")
+                
+                if (canNavigateUp) {
                     // If we can navigate up, do that instead of exiting
                     fileManager.navigateToParentDirectory()
                 } else {
-                    // Otherwise handle back to exit
+                    // At the top level - handle double-back to exit
                     if (backPressedTime + backToExitPressedInterval > System.currentTimeMillis()) {
                         isEnabled = false
                         onBackPressedDispatcher.onBackPressed()

@@ -4,110 +4,109 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:focusable="false"
-    android:paddingStart="24dp"
-    android:paddingEnd="24dp"
-    android:paddingTop="16dp"
-    android:paddingBottom="16dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:background="#121212">
 
-    <TextView
-        android:id="@+id/currentPathText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Current: /"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-        
+    <!-- Top bar: Parent, Path, Status, Server Button -->
     <LinearLayout
-        android:id="@+id/navigationButtonsLayout"
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@+id/currentPathText"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
         
-        <Button
+        <ImageButton
             android:id="@+id/parentDirButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Parent"
-            android:layout_marginEnd="16dp"
+            android:layout_width="48dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_arrow_up"
+            android:scaleType="centerInside"
+            android:padding="8dp"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:nextFocusRight="@id/toggleServer"
             android:nextFocusDown="@id/fileList"
-            android:padding="20dp"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textAllCaps="false"
             android:backgroundTint="#757575"
             style="@style/Widget.AppCompat.Button.Colored" />
             
+        <TextView
+            android:id="@+id/currentPathText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:text="/"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#4CAF50"
+            android:singleLine="true"
+            android:ellipsize="start" />
+
+        <LinearLayout
+            android:id="@+id/statusLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_vertical|end"
+            android:layout_marginEnd="12dp">
+            
+            <TextView
+                android:id="@+id/serverStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Server: Stopped"
+                android:textSize="12sp"
+                android:textColor="#FFEB3B" />
+
+            <TextView
+                android:id="@+id/serverUrl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="12sp"
+                android:textColor="#FFFFFF"
+                android:visibility="gone" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/toggleServer"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Start Server"
+            android:layout_height="40dp"
+            android:drawableStart="@drawable/ic_play"
+            android:drawablePadding="12dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="24dp"
+            android:gravity="center_vertical|start"
+            android:text="Start"
+            android:textSize="12sp"
+            android:textAllCaps="false"
+            android:minWidth="72dp"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:nextFocusLeft="@id/parentDirButton"
             android:nextFocusDown="@id/fileList"
-            android:padding="20dp"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textAllCaps="false"
             android:backgroundTint="#757575"
             style="@style/Widget.AppCompat.Button.Colored" />
     </LinearLayout>
 
+    <!-- File grid -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/fileList"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginTop="8dp"
         android:focusable="true"
         android:nextFocusUp="@id/parentDirButton"
-        app:layout_constraintBottom_toTopOf="@+id/serverStatus"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/navigationButtonsLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/topBar" />
 
-    <TextView
-        android:id="@+id/serverStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Server Status: Stopped"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="#FFEB3B"
-        android:background="#33000000"
-        android:padding="8dp"
-        android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/serverUrl"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/serverUrl"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Server URL: Not Started"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:background="#33000000"
-        android:padding="8dp"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout> 
+</androidx.constraintlayout.widget.ConstraintLayout>

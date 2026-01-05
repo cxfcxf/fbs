@@ -52,12 +52,23 @@ class FileAdapter(private val onFileClick: (File) -> Unit) :
     ) : RecyclerView.ViewHolder(binding.root) {
 
         init {
-            // Set click listener
+            // Set click listener - opens file/folder
             binding.root.setOnClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onItemClick(getItem(position))
                 }
+            }
+            
+            // Set long-press listener - shows action menu (delete)
+            binding.root.setOnLongClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val file = getItem(position)
+                    // Show delete confirmation directly on long press
+                    onItemDelete?.invoke(file)
+                }
+                true
             }
 
             // Set focus listener for TV remote control
@@ -75,27 +86,20 @@ class FileAdapter(private val onFileClick: (File) -> Unit) :
         }
 
         fun bind(file: File) {
-            // Special handling for directories to make them stand out
+            // Set file name
+            binding.fileName.text = file.name
+            
+            // Special handling for directories vs files
             if (file.isDirectory) {
-                // Make folder names more distinctive - just the plain name without emoji
-                binding.fileName.text = file.name
                 binding.fileName.setTypeface(null, android.graphics.Typeface.BOLD)
-                binding.fileName.setTextColor(Color.WHITE) // Make folder names white for better visibility
-                binding.fileDetails.text = "Directory"
-                binding.fileDetails.setTextColor(Color.LTGRAY) // Light gray for details
+                binding.fileDetails.text = ""
             } else {
-                // Regular files with last modified time
-                val lastModified = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-                    .format(java.util.Date(file.lastModified()))
-                binding.fileName.text = file.name
                 binding.fileName.setTypeface(null, android.graphics.Typeface.NORMAL)
-                binding.fileName.setTextColor(Color.WHITE) // Make file names white too
-                
-                // Calculate file size
-                val fileSize = formatFileSize(file.length())
-                binding.fileDetails.text = "$fileSize - $lastModified"
-                binding.fileDetails.setTextColor(Color.LTGRAY) // Light gray for details
+                binding.fileDetails.text = formatFileSize(file.length())
             }
+            
+            binding.fileName.setTextColor(Color.WHITE)
+            binding.fileDetails.setTextColor(Color.GRAY)
             
             // Enable marquee for long text
             binding.fileName.isSingleLine = true
@@ -103,81 +107,29 @@ class FileAdapter(private val onFileClick: (File) -> Unit) :
             binding.fileName.ellipsize = android.text.TextUtils.TruncateAt.MARQUEE
             binding.fileName.marqueeRepeatLimit = -1  // Forever
             
-            // Set icon based on file type
+            // Set icon based on file type - using custom colorful icons
             binding.fileIcon.setImageResource(
                 if (file.isDirectory) {
-                    android.R.drawable.ic_dialog_dialer  // Folder icon
+                    R.drawable.ic_folder
                 } else {
                     // Choose icon based on file extension
                     when (file.extension.lowercase()) {
-                        "apk" -> android.R.drawable.ic_menu_upload
-                        "jpg", "jpeg", "png", "gif" -> android.R.drawable.ic_menu_gallery
-                        "mp4", "3gp", "mkv" -> android.R.drawable.ic_media_play
-                        else -> android.R.drawable.ic_menu_save
+                        "apk" -> R.drawable.ic_apk
+                        "jpg", "jpeg", "png", "gif", "webp", "bmp" -> R.drawable.ic_image
+                        "mp4", "3gp", "mkv", "avi", "mov", "webm" -> R.drawable.ic_video
+                        else -> R.drawable.ic_file
                     }
                 }
             )
             
-            // Ensure the item shows prominent focus when navigating with remote
-            binding.root.onFocusChangeListener = View.OnFocusChangeListener { view, hasFocus ->
-                // Setup text for focused state
+            // Simple focus handler - just enable marquee for long text when focused
+            // Selection box background handles the visual focus indication
+            binding.root.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
                 binding.fileName.isSelected = hasFocus
-                
-                if (hasFocus) {
-                    // Make focused item stand out with animation
-                    view.animate().scaleX(1.05f).scaleY(1.05f).setDuration(150).start()
-                    binding.fileName.setTextColor(Color.WHITE)
-                    
-                    // Show cursor-like indicator by adding yellow border in drawable
-                    // This is handled by the selector drawable
-                    
-                    // Make the icon bigger and change its tint for focus
-                    binding.fileIcon.animate().scaleX(1.2f).scaleY(1.2f).setDuration(150).start()
-                    binding.fileIcon.setColorFilter(Color.YELLOW)
-                } else {
-                    // Reset to default for unfocused state
-                    view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()
-                    binding.fileName.setTextColor(Color.WHITE) // Keep text white even when unfocused
-                    
-                    // Reset icon
-                    binding.fileIcon.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start()
-                    binding.fileIcon.clearColorFilter()
-                }
             }
             
             // Force a check of the current focus state
             binding.root.onFocusChangeListener.onFocusChange(binding.root, binding.root.isFocused)
-
-            // Hide delete button initially
-            binding.deleteButton.visibility = View.GONE
-
-            // Delete button click listener
-            binding.deleteButton.setOnClickListener {
-                onItemDelete?.invoke(file)
-            }
-
-            // Handle key events for showing delete button
-            binding.root.setOnKeyListener { _, keyCode, event ->
-                if (event.action == android.view.KeyEvent.ACTION_DOWN) {
-                    when (keyCode) {
-                        android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                            // Show delete button when pressing right
-                            binding.deleteButton.visibility = View.VISIBLE
-                            binding.deleteButton.requestFocus()
-                            return@setOnKeyListener true
-                        }
-                        android.view.KeyEvent.KEYCODE_BACK -> {
-                            // Hide delete button when pressing back
-                            if (binding.deleteButton.visibility == View.VISIBLE) {
-                                binding.deleteButton.visibility = View.GONE
-                                binding.root.requestFocus()
-                                return@setOnKeyListener true
-                            }
-                        }
-                    }
-                }
-                false
-            }
 
             // Handle deletion button focus change
             binding.deleteButton.setOnFocusChangeListener { _, hasFocus ->

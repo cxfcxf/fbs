@@ -6,7 +6,8 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.recyclerview.widget.LinearLayoutManager
+import android.widget.ImageButton
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cxfcxf.androidtvfileserver.databinding.ActivityMainBinding
 import java.io.File
@@ -41,25 +42,28 @@ class UIManager(
     }
     
     fun updateCurrentPath(path: String) {
-        binding.currentPathText.text = "Current: $path"
+        binding.currentPathText.text = path
     }
     
     fun updateServerStatus(status: String, url: String?) {
-        binding.serverStatus.text = "Server Status: $status"
-        binding.serverStatus.visibility = View.VISIBLE
-        
         if (url != null) {
-            binding.serverUrl.text = "Server URL: $url"
-            binding.toggleServer.text = "Stop Server"
+            binding.serverStatus.text = "Running"
+            binding.serverStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+            binding.serverUrl.text = url
+            binding.serverUrl.visibility = View.VISIBLE
+            binding.toggleServer.text = "Stop"
+            binding.toggleServer.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_stop, 0, 0, 0)
         } else {
-            binding.serverUrl.text = "Server URL: Not Started"
-            binding.toggleServer.text = "Start Server"
+            binding.serverStatus.text = "Stopped"
+            binding.serverStatus.setTextColor(android.graphics.Color.parseColor("#FFEB3B"))
+            binding.serverUrl.visibility = View.GONE
+            binding.toggleServer.text = "Start"
+            binding.toggleServer.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_play, 0, 0, 0)
         }
-        binding.serverUrl.visibility = View.VISIBLE
     }
     
     fun updateUploadProgress(filename: String, totalBytes: Long, mbPerSecond: Double) {
-        binding.serverStatus.text = "Server Status: Receiving upload '${filename}' (${totalBytes / (1024 * 1024)} MB @ ${String.format("%.1f", mbPerSecond)} MB/s)"
+        binding.serverStatus.text = "↑ ${filename.take(15)}... ${totalBytes / (1024 * 1024)}MB"
     }
     
     private fun setupFileList() {
@@ -73,7 +77,8 @@ class UIManager(
         }
 
         binding.fileList.apply {
-            layoutManager = LinearLayoutManager(context)
+            // Use GridLayoutManager with 10 columns for high-density TV display
+            layoutManager = GridLayoutManager(context, 10)
             adapter = fileAdapter
             
             // TV remote navigation enhancements
@@ -82,13 +87,14 @@ class UIManager(
             isFocusableInTouchMode = true
             
             // Set explicit navigation paths for d-pad
-            nextFocusUpId = R.id.parentDirButton
+            // Set explicit navigation paths for d-pad (removed hardcoded up)
+            // nextFocusUpId = R.id.parentDirButton
             
             // Make d-pad navigation smoother by setting focus behavior
             descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
             
             // Set padding to see the focus highlight better
-            setPadding(16, 8, 16, 8)
+            setPadding(8, 4, 8, 4)
             clipToPadding = false
             
             // Handle key events to improve navigation
@@ -96,11 +102,25 @@ class UIManager(
                 if (event.action == KeyEvent.ACTION_DOWN) {
                     // Handle UP navigation to buttons
                     if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                        val lm = layoutManager as LinearLayoutManager
-                        // If we're at the top of the list, move focus to buttons
-                        if (lm.findFirstCompletelyVisibleItemPosition() == 0) {
-                            binding.parentDirButton.requestFocus()
-                            return@setOnKeyListener true
+                        val focusedView = findFocus()
+                        if (focusedView != null) {
+                            var viewParent = focusedView
+                            while (viewParent != null && viewParent.parent != this) {
+                                viewParent = viewParent.parent as? View
+                            }
+                            
+                            if (viewParent != null) {
+                                val pos = getChildAdapterPosition(viewParent)
+                                if (pos != RecyclerView.NO_POSITION && pos < 10) {
+                                    // Top row, decide which button to focus based on column
+                                    if (pos % 10 < 5) {
+                                        binding.parentDirButton.requestFocus()
+                                    } else {
+                                        binding.toggleServer.requestFocus()
+                                    }
+                                    return@setOnKeyListener true
+                                }
+                            }
                         }
                     }
                 }
@@ -125,9 +145,8 @@ class UIManager(
                                 val position = recyclerView.getChildAdapterPosition(viewParent)
                                 if (position != RecyclerView.NO_POSITION) {
                                     // Center the focused item
-                                    val lm = layoutManager as LinearLayoutManager
-                                    lm.scrollToPositionWithOffset(position, 
-                                        recyclerView.height / 2 - viewParent.height / 2)
+                                    val lm = layoutManager as GridLayoutManager
+                                    recyclerView.smoothScrollToPosition(position)
                                 }
                             }
                         }
@@ -138,8 +157,8 @@ class UIManager(
                     super.onScrollStateChanged(recyclerView, newState)
                     if (newState == RecyclerView.SCROLL_STATE_IDLE && !recyclerView.hasFocus()) {
                         // If we've stopped scrolling and no item has focus, try to focus an item
-                        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                        val firstVisiblePosition = layoutManager.findFirstCompletelyVisibleItemPosition()
+                        val lm = recyclerView.layoutManager as GridLayoutManager
+                        val firstVisiblePosition = lm.findFirstCompletelyVisibleItemPosition()
                         if (firstVisiblePosition != RecyclerView.NO_POSITION) {
                             val viewHolder = recyclerView.findViewHolderForAdapterPosition(firstVisiblePosition)
                             viewHolder?.itemView?.requestFocus()
@@ -211,10 +230,18 @@ class UIManager(
                     view.backgroundTintList = android.content.res.ColorStateList.valueOf(
                         Color.parseColor("#4CAF50") // Green color
                     )
+                } else if (view is ImageButton) {
+                    view.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                        Color.parseColor("#4CAF50") // Green color
+                    )
                 }
             } else {
                 // Restore to gray when unfocused
                 if (view is Button) {
+                    view.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                        Color.parseColor("#757575") // Gray color
+                    )
+                } else if (view is ImageButton) {
                     view.backgroundTintList = android.content.res.ColorStateList.valueOf(
                         Color.parseColor("#757575") // Gray color
                     )
