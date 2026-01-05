@@ -1,65 +1,65 @@
 # Android TV File Server (FBS)
 
-An Android TV application that serves files over the network.
+An Android TV application that transforms your TV into a file server, allowing easy file management via a web browser.
 
 English | [简体中文](README.zh-CN.md)
 
 ## Features
 
-- Simple and TV-friendly file browsing interface
-- Built-in HTTP server with file upload capabilities
-- Easy file deletion with the remote control (press RIGHT on a file)
-- APK installation support
-- Directory navigation
-- Permissions handling for Android 10+
+- **High-Density Grid Interface**: Optimized 10-column layout to display more files on large screens.
+- **Web Management UI**: Full-featured browser interface to manage files from your computer or phone.
+    - **Upload**: Drag & drop files directly to the current directory.
+    - **Delete**: Remove files and folders remotely.
+    - **Navigation**: Independent browsing history and directory persistence.
+- **TV Controls**: 
+    - **Optimized Navigation**: Smart D-pad support.
+    - **Quick Actions**: Long-press to delete files directly on TV.
+- **Built-in HTTP Server**: Robust server for file transfer.
 
 ## Usage
 
-### Installation
+### TV Interface
 
-1. Download the APK file
-2. Install on your Android TV device
-3. Grant the necessary permissions when prompted
+1.  **Launch the App**: Grant storage permissions if prompted.
+2.  **Browse Files**:
+    - Use D-pad to navigate the 10-column grid.
+    - **Click (Center)** to open a file or enter a folder.
+    - **Long-Press (Center)** on a file/folder to delete it.
+3.  **Start Server**:
+    - Navigate to the **"Start"** button in the top-right corner.
+    - Click to toggle the server ON/OFF.
+    - The server URL (e.g., `http://192.168.1.x:8080`) will appear next to the button.
 
-### File Browser
+### Web Interface
 
-- Use the D-pad to navigate through files and folders
-- Press RIGHT on a file to show the delete button
-- Press OK on the delete button to confirm deletion
-
-### File Upload Server
-
-1. Start the server from the main screen
-2. Note the server URL shown on the screen
-3. Open the URL in a web browser on your computer or mobile device
-4. Drag & drop files to upload them to the TV
+1.  Make sure your computer/phone is on the same Wi-Fi network as the TV.
+2.  Open the server URL shown on the TV in your web browser.
+3.  **Manage Files**:
+    - **Navigate**: Click folders to browse. The URL updates automatically, so you can bookmark folders.
+    - **Upload**: Drag & drop files anywhere on the page, or use the "Select Files" button. Files upload to the *current* folder.
+    - **Delete**: Click the trash icon (🗑️) next to any item to delete it.
 
 ## Development
 
 ### Requirements
 
-- Android Studio Iguana (2023.2.1) or newer
-- JDK 17 or newer
-- Android API 33+ SDK
+- Android Studio Iguana or newer
+- JDK 21
+- Android API 34+ SDK
 
 ### Building
 
-1. Clone the repository
-2. Open the project in Android Studio
-3. Build using Gradle:
-   ```
-   ./gradlew assembleDebug
-   ```
-   This will generate the APK at `app/build/outputs/apk/debug/fbs.apk`
-4. Install on a device:
-   ```
-   adb install -r app/build/outputs/apk/debug/fbs.apk
-   ```
+1.  Clone the repository.
+2.  Open in Android Studio.
+3.  Build using Gradle:
+    ```bash
+    ./gradlew assembleDebug
+    ```
+4.  Install on device via ADB:
+    ```bash
+    adb install -r app/build/outputs/apk/debug/fbs.apk
+    ```
 
 ## License
 
 This project is open source and available under the [MIT License](LICENSE).
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. 
