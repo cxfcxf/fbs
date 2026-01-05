@@ -5,8 +5,27 @@ const uploadButton = document.getElementById('uploadButton');
 const uploadStatus = document.getElementById('uploadStatus');
 const fileList = document.getElementById('fileList');
 
-// Current directory for web UI - always starts at base directory (independent from TV UI)
+// Current directory for web UI
 let currentDir = '/storage/emulated/0';
+
+// Check for path parameter in URL on load
+const urlParams = new URLSearchParams(window.location.search);
+const pathParam = urlParams.get('path');
+if (pathParam && pathParam.startsWith('/storage/emulated/0')) {
+    currentDir = pathParam;
+}
+
+// Handle back/forward browser buttons
+window.onpopstate = function (event) {
+    if (event.state && event.state.path) {
+        currentDir = event.state.path;
+        loadFiles();
+    } else {
+        const p = new URLSearchParams(window.location.search).get('path');
+        currentDir = (p && p.startsWith('/storage/emulated/0')) ? p : '/storage/emulated/0';
+        loadFiles();
+    }
+};
 
 // Load files on page load
 document.addEventListener('DOMContentLoaded', function () {
@@ -83,14 +102,21 @@ function loadFiles() {
                         fileItem.className += ' folder';
                         const dirPath = currentDir + '/' + fileObj.name;
                         fileItem.innerHTML = '📁 <span class="file-name"><a href="#" onclick="navigateToDir(\'' + dirPath + '\'); return false;">' + fileObj.name + '</a></span>';
+
+                        // Add delete button for directories (using encoded path)
+                        const fullPath = currentDir + '/' + fileObj.name;
+                        fileItem.innerHTML += '<button class="delete-btn" title="Delete" onclick="deleteFile(\'' + fullPath.replace(/'/g, "\\'") + '\')">🗑️</button>';
                     } else {
                         fileItem.className += ' file';
                         // Format the date for display
                         const lastModified = new Date(fileObj.lastModified);
                         const formattedDate = lastModified.toISOString().replace('T', ' ').substring(0, 19);
+                        const fullPath = currentDir + '/' + fileObj.name;
+
                         fileItem.innerHTML =
                             '<span class="file-name">📄 <a href="/files/' + fileObj.name + '" download>' + fileObj.name + '</a></span>' +
-                            '<span class="file-meta">' + formatSize(fileObj.size) + ' - ' + formattedDate + '</span>';
+                            '<span class="file-meta">' + formatSize(fileObj.size) + ' - ' + formattedDate + '</span>' +
+                            '<button class="delete-btn" title="Delete" onclick="deleteFile(\'' + fullPath.replace(/'/g, "\\'") + '\')">🗑️</button>';
                     }
 
                     fileList.appendChild(fileItem);
@@ -158,7 +184,7 @@ function uploadFile(file) {
 
     // Use binary upload with the actual file content and a longer timeout
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/upload-simple?filename=' + encodeURIComponent(file.name));
+    xhr.open('POST', '/upload-simple?filename=' + encodeURIComponent(file.name) + '&path=' + encodeURIComponent(currentDir));
     xhr.timeout = 3600000; // 1 hour timeout for very large files
 
     // Set a flag to track completion state
@@ -261,6 +287,11 @@ function navigateToDir(path) {
         .then(function (data) {
             if (data.success) {
                 currentDir = data.path;
+
+                // Update URL parameter without reloading page
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?path=' + encodeURIComponent(currentDir);
+                window.history.pushState({ path: currentDir }, '', newUrl);
+
                 loadFiles();
             } else {
                 alert('Error: ' + (data.error || 'Could not navigate to directory'));
@@ -270,4 +301,25 @@ function navigateToDir(path) {
             alert('Network error: Could not navigate to directory');
             console.error('Navigation error:', error);
         });
+}
+
+function deleteFile(path) {
+    if (confirm('Are you sure you want to delete this item?\n' + path)) {
+        fetch('/api/delete?path=' + encodeURIComponent(path), {
+            method: 'POST'
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Refresh the file list
+                    loadFiles();
+                } else {
+                    alert('Error deleting file: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(function (error) {
+                alert('Network error: Could not delete file');
+                console.error('Delete error:', error);
+            });
+    }
 } 

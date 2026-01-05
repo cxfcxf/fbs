@@ -136,14 +136,60 @@ class WebServer(private val context: Context, private val fileManager: FileManag
                 }
             }
 
+            // File deletion endpoint
+            post("/api/delete") { request: AsyncHttpServerRequest, response: AsyncHttpServerResponse ->
+                val filePath = request.query?.getString("path")
+                val baseDir = "/storage/emulated/0"
+                
+                if (filePath != null) {
+                    val file = File(filePath)
+                    
+                    // Security check: don't allow deletion outside base directory
+                    if (!file.absolutePath.startsWith(baseDir)) {
+                        response.code(403)
+                        response.send("application/json", gson.toJson(mapOf(
+                            "success" to false, 
+                            "error" to "Cannot delete files outside $baseDir"
+                        )))
+                        return@post
+                    }
+                    
+                    if (file.exists()) {
+                        val deleted = file.deleteRecursively()
+                        if (deleted) {
+                            Log.d(TAG, "Deleted file: ${file.absolutePath}")
+                            response.send("application/json", gson.toJson(mapOf("success" to true)))
+                        } else {
+                            Log.e(TAG, "Failed to delete file: ${file.absolutePath}")
+                            response.send("application/json", gson.toJson(mapOf("success" to false, "error" to "Failed to delete file")))
+                        }
+                    } else {
+                        response.code(404)
+                        response.send("application/json", gson.toJson(mapOf("success" to false, "error" to "File not found")))
+                    }
+                } else {
+                    response.code(400)
+                    response.send("application/json", gson.toJson(mapOf("success" to false, "error" to "Missing path parameter")))
+                }
+            }
+
             // File upload endpoint with improved large file handling
             post("/upload-simple") { request: AsyncHttpServerRequest, response: AsyncHttpServerResponse ->
                 try {
                     val filename = request.query?.getString("filename") ?: "upload_${System.currentTimeMillis()}"
                     Log.d(TAG, "Upload request received for file: $filename")
                     
+                    val uploadPath = request.query?.getString("path")
+                    val baseDir = "/storage/emulated/0"
+                    
+                    val targetDir = if (uploadPath != null && uploadPath.startsWith(baseDir)) {
+                         File(uploadPath)
+                    } else {
+                         fileManager.getCurrentDirectory()
+                    }
+
                     // We'll reuse the same filename (overwrite existing files with the same name)
-                    val file = File(fileManager.getCurrentDirectory(), filename)
+                    val file = File(targetDir, filename)
                     
                     // Make sure we have a clean start - delete any existing file with same name
                     if (file.exists()) {
