@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#81C784</color>
-    <color name="primary_dark">#4CAF50</color>
-    <color name="accent">#FF8A65</color>
-    <color name="file_item_background">#121212</color>
-    <color name="text_color_default">#FFFFFF</color>
-    <color name="focus_highlight">#FFEB3B</color>
-</resources> 
+    <!-- Night theme colors - same as default since we're using a dark theme -->
+    <color name="primary">#6366F1</color>
+    <color name="primary_dark">#4F46E5</color>
+    <color name="accent">#22D3EE</color>
+    <color name="file_item_background">#1E293B</color>
+    <color name="text_color_default">#F8FAFC</color>
+    <color name="focus_highlight">#818CF8</color>
+</resources>

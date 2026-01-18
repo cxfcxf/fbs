@@ -4,11 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:focusable="false"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
-    android:background="#121212">
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    android:background="@color/bg_primary">
 
     <!-- Top bar: Parent, Path, Status, Server Button -->
     <LinearLayout
@@ -17,35 +17,36 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:paddingBottom="12dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
         
         <ImageButton
             android:id="@+id/parentDirButton"
-            android:layout_width="48dp"
-            android:layout_height="40dp"
+            android:layout_width="52dp"
+            android:layout_height="44dp"
             android:src="@drawable/ic_arrow_up"
             android:scaleType="centerInside"
-            android:padding="8dp"
+            android:padding="10dp"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:nextFocusRight="@id/toggleServer"
             android:nextFocusDown="@id/fileList"
-            android:backgroundTint="#757575"
-            style="@style/Widget.AppCompat.Button.Colored" />
+            android:background="@drawable/button_background"
+            android:contentDescription="Go to parent directory" />
             
         <TextView
             android:id="@+id/currentPathText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
             android:text="/"
-            android:textSize="14sp"
+            android:textSize="15sp"
             android:textStyle="bold"
-            android:textColor="#4CAF50"
+            android:textColor="@color/accent"
             android:singleLine="true"
             android:ellipsize="start" />
 
@@ -55,15 +56,15 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_vertical|end"
-            android:layout_marginEnd="12dp">
+            android:layout_marginEnd="16dp">
             
             <TextView
                 android:id="@+id/serverStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Server: Stopped"
-                android:textSize="12sp"
-                android:textColor="#FFEB3B" />
+                android:textSize="13sp"
+                android:textColor="@color/warning" />
 
             <TextView
                 android:id="@+id/serverUrl"
@@ -71,29 +72,29 @@
                 android:layout_height="wrap_content"
                 android:text=""
                 android:textSize="12sp"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_secondary"
                 android:visibility="gone" />
         </LinearLayout>
 
         <Button
             android:id="@+id/toggleServer"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="48dp"
             android:drawableStart="@drawable/ic_play"
             android:drawablePadding="12dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="24dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="28dp"
             android:gravity="center_vertical|start"
             android:text="Start"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textAllCaps="false"
-            android:minWidth="72dp"
+            android:textColor="@color/text_primary"
+            android:minWidth="100dp"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:nextFocusLeft="@id/parentDirButton"
             android:nextFocusDown="@id/fileList"
-            android:backgroundTint="#757575"
-            style="@style/Widget.AppCompat.Button.Colored" />
+            android:background="@drawable/button_background" />
     </LinearLayout>
 
     <!-- File grid -->
@@ -104,6 +105,8 @@
         android:layout_marginTop="8dp"
         android:focusable="true"
         android:nextFocusUp="@id/parentDirButton"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

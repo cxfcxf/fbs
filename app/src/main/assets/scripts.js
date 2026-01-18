@@ -4,6 +4,7 @@ const fileInput = document.getElementById('fileInput');
 const uploadButton = document.getElementById('uploadButton');
 const uploadStatus = document.getElementById('uploadStatus');
 const fileList = document.getElementById('fileList');
+const currentPathEl = document.getElementById('currentPath');
 
 // Current directory for web UI
 let currentDir = '/storage/emulated/0';
@@ -66,6 +67,11 @@ fileInput.addEventListener('change', function () {
 const baseDir = '/storage/emulated/0';
 
 function loadFiles() {
+    // Update path display if element exists
+    if (currentPathEl) {
+        currentPathEl.textContent = currentDir;
+    }
+
     // Pass current directory to API for independent navigation (doesn't affect TV UI)
     fetch('/api/files?path=' + encodeURIComponent(currentDir))
         .then(function (response) { return response.json(); })

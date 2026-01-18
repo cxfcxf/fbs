@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Focused state -->
+    <!-- Focused state - bright white -->
     <item android:state_focused="true" android:color="#FFFFFF" />
     
-    <!-- Default state - white text for dark theme -->
-    <item android:color="#DDDDDD" />
-</selector> 
+    <!-- Default state - light text for dark theme -->
+    <item android:color="#F8FAFC" />
+</selector>

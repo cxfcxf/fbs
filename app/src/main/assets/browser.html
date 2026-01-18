@@ -1,26 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Android TV File Server - Upload and browse files on your Android TV">
     <title>Android TV File Server</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <h1>Android TV File Server</h1>
-    <p>Current Directory: ${currentDir}</p>
+    <!-- Header -->
+    <header>
+        <h1>📺 Android TV File Server</h1>
+        <p class="current-path" id="currentPath">${currentDir}</p>
+    </header>
     
-    <div class="upload-area" id="dropArea">
-        <p>Drag & drop files here or click to select files</p>
+    <!-- Upload Section -->
+    <section class="upload-area" id="dropArea">
+        <p>Drag & drop files here or click to upload</p>
         <input type="file" id="fileInput" style="display: none;" multiple>
-        <button class="upload-button" id="uploadButton">Choose Files</button>
+        <button class="upload-button" id="uploadButton">
+            <span>Choose Files</span>
+        </button>
         <div class="upload-status" id="uploadStatus"></div>
-    </div>
+    </section>
     
-    <div class="file-list" id="fileList">
-        <!-- Files will be loaded here -->
-    </div>
+    <!-- File Browser -->
+    <section class="file-list" id="fileList">
+        <!-- Files will be loaded here dynamically -->
+    </section>
     
     <script src="/scripts.js"></script>
 </body>
-</html> 
+</html>

@@ -1,11 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#4CAF50</color>
-    <color name="primary_dark">#388E3C</color>
-    <color name="accent">#FF5722</color>
-    <color name="file_item_background">#FFFFFF</color>
-    <color name="text_color_default">#000000</color>
-    <color name="focus_highlight">#FFEB3B</color>
+    <!-- Modern Dark Theme Color Palette -->
+    
+    <!-- Primary Colors - Indigo -->
+    <color name="primary">#6366F1</color>
+    <color name="primary_dark">#4F46E5</color>
+    <color name="primary_light">#818CF8</color>
+    
+    <!-- Accent Colors - Cyan -->
+    <color name="accent">#22D3EE</color>
+    <color name="accent_dark">#06B6D4</color>
+    
+    <!-- Background Colors - Dark Slate -->
+    <color name="bg_primary">#0F172A</color>
+    <color name="bg_secondary">#1E293B</color>
+    <color name="bg_tertiary">#334155</color>
+    <color name="bg_elevated">#475569</color>
+    
+    <!-- Surface Colors for Cards -->
+    <color name="surface">#1E293B</color>
+    <color name="surface_light">#334155</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_muted">#64748B</color>
+    
+    <!-- Focus and Selection -->
+    <color name="focus_highlight">#818CF8</color>
+    <color name="focus_glow">#6366F1</color>
+    <color name="selection">#3B82F6</color>
+    
+    <!-- Status Colors -->
+    <color name="success">#22C55E</color>
+    <color name="warning">#F59E0B</color>
+    <color name="error">#EF4444</color>
+    
+    <!-- File Item Colors -->
+    <color name="file_item_background">#1E293B</color>
+    <color name="file_item_focused">#334155</color>
+    
+    <!-- Folder Icon Color -->
+    <color name="folder_color">#22D3EE</color>
+    <color name="file_color">#818CF8</color>
+    
+    <!-- Button Colors -->
+    <color name="button_bg">#334155</color>
+    <color name="button_focused">#6366F1</color>
+    
+    <!-- Legacy colors for compatibility -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -13,4 +56,5 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-</resources> 
+    <color name="text_color_default">#F8FAFC</color>
+</resources>
