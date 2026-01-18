@@ -16,6 +16,7 @@ import java.net.NetworkInterface
 class WebServer(private val context: Context, private val fileManager: FileManager) {
     private val TAG = "WebServer"
     private var server: AsyncHttpServer? = null
+    private var serverSocket: com.koushikdutta.async.AsyncServerSocket? = null
     private var serverPort = 8080
     private val gson = Gson()
     
@@ -34,7 +35,7 @@ class WebServer(private val context: Context, private val fileManager: FileManag
     }
     
     fun isRunning(): Boolean {
-        return server != null
+        return server != null && serverSocket != null
     }
     
     fun startServer() {
@@ -426,7 +427,7 @@ class WebServer(private val context: Context, private val fileManager: FileManag
         }
 
         try {
-            server?.listen(serverPort)
+            serverSocket = server?.listen(serverPort)
             
             // Get server URL
             val ip = getLocalIpAddress()
@@ -444,9 +445,16 @@ class WebServer(private val context: Context, private val fileManager: FileManag
     
     fun stopServer() {
         try {
+            // Stop the server socket first to close the listening port
+            serverSocket?.stop()
+            serverSocket = null
+            
+            // Then stop the HTTP server
             server?.stop()
             server = null
+            
             listener?.onServerStopped()
+            Log.d(TAG, "Server stopped successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping server", e)
         }
