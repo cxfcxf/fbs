@@ -1,3 +1,8 @@
+// ====================================
+// FBS - Android TV File Server
+// Client-side JavaScript
+// ====================================
+
 // DOM elements
 const dropArea = document.getElementById('dropArea');
 const fileInput = document.getElementById('fileInput');
@@ -5,9 +10,19 @@ const uploadButton = document.getElementById('uploadButton');
 const uploadStatus = document.getElementById('uploadStatus');
 const fileList = document.getElementById('fileList');
 const currentPathEl = document.getElementById('currentPath');
+const fileCountEl = document.getElementById('fileCount');
+const footerTimeEl = document.getElementById('footerTime');
+const particlesContainer = document.getElementById('particles');
 
 // Current directory for web UI
 let currentDir = '/storage/emulated/0';
+
+// Base directory - don't allow navigation above this level
+const baseDir = '/storage/emulated/0';
+
+// ====================================
+// Initialization
+// ====================================
 
 // Check for path parameter in URL on load
 const urlParams = new URLSearchParams(window.location.search);
@@ -31,9 +46,57 @@ window.onpopstate = function (event) {
 // Load files on page load
 document.addEventListener('DOMContentLoaded', function () {
     loadFiles();
+    initParticles();
+    updateFooterTime();
+    setInterval(updateFooterTime, 1000);
 });
 
-// Event listeners
+// ====================================
+// Particle Effects
+// ====================================
+
+function initParticles() {
+    if (!particlesContainer) return;
+
+    for (let i = 0; i < 20; i++) {
+        createParticle();
+    }
+}
+
+function createParticle() {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 15 + 's';
+    particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+    particlesContainer.appendChild(particle);
+}
+
+// ====================================
+// Footer Time
+// ====================================
+
+function updateFooterTime() {
+    if (!footerTimeEl) return;
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    const date = now.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+    footerTimeEl.textContent = `${date} ${time}`;
+}
+
+// ====================================
+// Event Listeners
+// ====================================
+
 dropArea.addEventListener('dragover', function (e) {
     e.preventDefault();
     dropArea.classList.add('highlight');
@@ -52,7 +115,14 @@ dropArea.addEventListener('drop', function (e) {
     }
 });
 
-uploadButton.addEventListener('click', function () {
+dropArea.addEventListener('click', function (e) {
+    if (e.target !== uploadButton && !uploadButton.contains(e.target)) {
+        fileInput.click();
+    }
+});
+
+uploadButton.addEventListener('click', function (e) {
+    e.stopPropagation();
     fileInput.click();
 });
 
@@ -62,9 +132,9 @@ fileInput.addEventListener('change', function () {
     }
 });
 
-// Functions
-// Base directory - don't allow navigation above this level
-const baseDir = '/storage/emulated/0';
+// ====================================
+// File Operations
+// ====================================
 
 function loadFiles() {
     // Update path display if element exists
@@ -72,7 +142,7 @@ function loadFiles() {
         currentPathEl.textContent = currentDir;
     }
 
-    // Pass current directory to API for independent navigation (doesn't affect TV UI)
+    // Pass current directory to API for independent navigation
     fetch('/api/files?path=' + encodeURIComponent(currentDir))
         .then(function (response) { return response.json(); })
         .then(function (data) {
@@ -83,14 +153,23 @@ function loadFiles() {
 
             // Only show parent directory if we're deeper than the base directory
             if (parentDir && parentDir !== currentDir && currentDir !== baseDir && currentDir.startsWith(baseDir + '/')) {
-                const parentItem = document.createElement('div');
-                parentItem.className = 'file-item folder';
-                parentItem.innerHTML = '<span class="file-name">📁 <a href="#" onclick="navigateToDir(\'' + parentDir + '\'); return false;">..</a> (Parent Directory)</span>';
+                const parentItem = createFileItem({
+                    name: '..',
+                    isDirectory: true,
+                    isParent: true
+                }, parentDir);
                 fileList.appendChild(parentItem);
             }
 
             // Add files and directories
             if (data && Array.isArray(data)) {
+                // Update file count
+                if (fileCountEl) {
+                    const dirCount = data.filter(f => f.isDirectory).length;
+                    const fileCount = data.filter(f => !f.isDirectory).length;
+                    fileCountEl.textContent = `${dirCount} folders, ${fileCount} files`;
+                }
+
                 data.sort(function (a, b) {
                     // Directories first
                     if (a.isDirectory && !b.isDirectory) return -1;
@@ -100,41 +179,130 @@ function loadFiles() {
                 });
 
                 for (let i = 0; i < data.length; i++) {
-                    const fileObj = data[i];
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item';
-
-                    if (fileObj.isDirectory) {
-                        fileItem.className += ' folder';
-                        const dirPath = currentDir + '/' + fileObj.name;
-                        fileItem.innerHTML = '📁 <span class="file-name"><a href="#" onclick="navigateToDir(\'' + dirPath + '\'); return false;">' + fileObj.name + '</a></span>';
-
-                        // Add delete button for directories (using encoded path)
-                        const fullPath = currentDir + '/' + fileObj.name;
-                        fileItem.innerHTML += '<button class="delete-btn" title="Delete" onclick="deleteFile(\'' + fullPath.replace(/'/g, "\\'") + '\')">🗑️</button>';
-                    } else {
-                        fileItem.className += ' file';
-                        // Format the date for display
-                        const lastModified = new Date(fileObj.lastModified);
-                        const formattedDate = lastModified.toISOString().replace('T', ' ').substring(0, 19);
-                        const fullPath = currentDir + '/' + fileObj.name;
-
-                        fileItem.innerHTML =
-                            '<span class="file-name">📄 <a href="/files/' + fileObj.name + '" download>' + fileObj.name + '</a></span>' +
-                            '<span class="file-meta">' + formatSize(fileObj.size) + ' - ' + formattedDate + '</span>' +
-                            '<button class="delete-btn" title="Delete" onclick="deleteFile(\'' + fullPath.replace(/'/g, "\\'") + '\')">🗑️</button>';
-                    }
-
+                    const fileItem = createFileItem(data[i], currentDir + '/' + data[i].name);
                     fileList.appendChild(fileItem);
                 }
             } else {
-                fileList.innerHTML = '<p>No files found</p>';
+                fileList.innerHTML = '<div class="empty-state"><span class="empty-state-icon">[ ]</span><span>No files found</span></div>';
+                if (fileCountEl) {
+                    fileCountEl.textContent = '0 items';
+                }
             }
         })
         .catch(function (error) {
             console.error('Error loading files:', error);
-            fileList.innerHTML = '<p>Error loading files</p>';
+            fileList.innerHTML = '<div class="empty-state"><span class="empty-state-icon">[!]</span><span>Error loading files</span></div>';
         });
+}
+
+function createFileItem(fileObj, fullPath) {
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+
+    if (fileObj.isDirectory) {
+        fileItem.className += ' folder';
+
+        const icon = document.createElement('span');
+        icon.className = 'file-icon';
+        icon.textContent = fileObj.isParent ? '↑' : '▶';
+
+        const fileName = document.createElement('span');
+        fileName.className = 'file-name';
+
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = fileObj.isParent ? '.. (Parent Directory)' : fileObj.name;
+        link.onclick = function(e) {
+            e.preventDefault();
+            navigateToDir(fullPath);
+        };
+
+        fileName.appendChild(link);
+        fileItem.appendChild(icon);
+        fileItem.appendChild(fileName);
+
+        // Add delete button for directories (not for parent)
+        if (!fileObj.isParent) {
+            const deleteBtn = createDeleteButton(fullPath);
+            fileItem.appendChild(deleteBtn);
+        }
+    } else {
+        fileItem.className += ' file';
+
+        const icon = document.createElement('span');
+        icon.className = 'file-icon';
+        icon.textContent = getFileIcon(fileObj.name);
+
+        const fileName = document.createElement('span');
+        fileName.className = 'file-name';
+
+        const link = document.createElement('a');
+        link.href = '/files/' + fileObj.name;
+        link.download = '';
+        link.textContent = fileObj.name;
+
+        fileName.appendChild(link);
+
+        const fileMeta = document.createElement('span');
+        fileMeta.className = 'file-meta';
+
+        const fileSize = document.createElement('span');
+        fileSize.className = 'file-size';
+        fileSize.textContent = formatSize(fileObj.size);
+
+        const fileDate = document.createElement('span');
+        fileDate.className = 'file-date';
+        const lastModified = new Date(fileObj.lastModified);
+        fileDate.textContent = lastModified.toISOString().replace('T', ' ').substring(0, 19);
+
+        fileMeta.appendChild(fileSize);
+        fileMeta.appendChild(fileDate);
+
+        const deleteBtn = createDeleteButton(fullPath);
+
+        fileItem.appendChild(icon);
+        fileItem.appendChild(fileName);
+        fileItem.appendChild(fileMeta);
+        fileItem.appendChild(deleteBtn);
+    }
+
+    return fileItem;
+}
+
+function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const icons = {
+        // Documents
+        pdf: '◈',
+        doc: '◇', docx: '◇',
+        txt: '≡', md: '≡',
+        // Images
+        jpg: '◎', jpeg: '◎', png: '◎', gif: '◎', webp: '◎', svg: '◎',
+        // Video
+        mp4: '▷', mkv: '▷', avi: '▷', mov: '▷',
+        // Audio
+        mp3: '♪', wav: '♪', flac: '♪', ogg: '♪',
+        // Archives
+        zip: '▤', rar: '▤', '7z': '▤', tar: '▤', gz: '▤',
+        // Code
+        js: '{ }', ts: '{ }', py: '#', java: '◆', kt: '◆',
+        html: '<>', css: '※', json: '{ }', xml: '<>',
+        // Apps
+        apk: '◉', exe: '◉', dmg: '◉',
+    };
+    return icons[ext] || '○';
+}
+
+function createDeleteButton(path) {
+    const btn = document.createElement('button');
+    btn.className = 'delete-btn';
+    btn.title = 'Delete';
+    btn.textContent = '×';
+    btn.onclick = function(e) {
+        e.stopPropagation();
+        deleteFile(path);
+    };
+    return btn;
 }
 
 function uploadFiles(files) {
@@ -149,9 +317,17 @@ function uploadFile(file) {
     // Create upload progress element
     const progressDiv = document.createElement('div');
     progressDiv.className = 'upload-progress';
-    progressDiv.innerHTML = '<span>Preparing to upload ' + file.name + ' (' + formatSize(file.size) + ')</span>';
+    progressDiv.innerHTML = `
+        <span>TRANSMITTING: ${file.name} (${formatSize(file.size)})</span>
+        <div class="progress-bar-container">
+            <div class="progress-bar" style="width: 0%"></div>
+        </div>
+    `;
     uploadStatus.innerHTML = '';
     uploadStatus.appendChild(progressDiv);
+
+    const progressBar = progressDiv.querySelector('.progress-bar');
+    const statusText = progressDiv.querySelector('span');
 
     console.log('Uploading file:', file.name, 'Size:', file.size, 'bytes');
 
@@ -167,115 +343,93 @@ function uploadFile(file) {
     const uploadTimer = setInterval(function () {
         const elapsed = Math.floor((Date.now() - uploadStartTime) / 1000);
 
-        // Only update timer text if we haven't reached 100% yet
         if (!uploadReached100) {
-            progressDiv.innerHTML = '<span>Uploading ' + file.name + ' (' + formatSize(file.size) + ') - ' + elapsed + 's elapsed</span>';
+            statusText.textContent = `TRANSMITTING: ${file.name} [${elapsed}s]`;
         } else {
-            // If we've reached 100%, show that and how long we've been at 100%
             const timeAt100 = Math.floor((Date.now() - timeReached100) / 1000);
-            progressDiv.innerHTML = '<span>Upload at 100% - Waiting for server to complete processing... (' + timeAt100 + 's)</span>';
+            statusText.textContent = `FINALIZING: ${file.name} [${timeAt100}s]`;
 
             // Auto-complete if we've been at 100% for more than 3 seconds
             if (timeAt100 > 3 && !uploadCompleted) {
                 console.log('Server confirmation taking too long, assuming upload completed successfully');
-                handleCompletion(true, 'Upload complete (auto-confirmed): ' + file.name);
+                handleCompletion(true, 'TRANSMISSION COMPLETE: ' + file.name);
             }
-        }
-
-        // Show a timeout warning after 2 minutes
-        if (elapsed > 120) {
-            progressDiv.innerHTML += '<br><span class="warning">Upload is taking longer than expected. Please be patient for large files.</span>';
         }
     }, 1000);
 
-    // Use binary upload with the actual file content and a longer timeout
+    // Use binary upload with the actual file content
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/upload-simple?filename=' + encodeURIComponent(file.name) + '&path=' + encodeURIComponent(currentDir));
     xhr.timeout = 3600000; // 1 hour timeout for very large files
 
-    // Set a flag to track completion state
     let uploadCompleted = false;
 
     // Add progress tracking
     xhr.upload.addEventListener('progress', function (e) {
         if (e.lengthComputable) {
             const percentComplete = Math.round((e.loaded / e.total) * 100);
-            progressDiv.innerHTML = '<span>Uploading ' + file.name + ' (' + formatSize(file.size) + ') - ' + percentComplete + '%</span>';
+            progressBar.style.width = percentComplete + '%';
+            statusText.textContent = `TRANSMITTING: ${file.name} [${percentComplete}%]`;
 
-            // Record when we hit 100%
             if (percentComplete === 100 && !uploadReached100) {
                 uploadReached100 = true;
                 timeReached100 = Date.now();
                 console.log('Upload reached 100%, waiting for server confirmation...');
+                statusText.textContent = `FINALIZING: ${file.name}`;
 
-                // Change progress display to show we're waiting for server
-                progressDiv.innerHTML = '<span>Upload at 100% - Finalizing on server...</span>';
-
-                // Add a fallback timeout to auto-complete after 3 seconds at 100%
                 setTimeout(function () {
                     if (!uploadCompleted) {
                         console.log('Server confirmation timed out, assuming upload completed successfully');
-                        handleCompletion(true, 'Upload complete (auto-finalized): ' + file.name);
+                        handleCompletion(true, 'TRANSMISSION COMPLETE: ' + file.name);
                     }
                 }, 3000);
             }
         }
     });
 
-    // Add loadend event which triggers when the request completes, regardless of success/failure
     xhr.addEventListener('loadend', function () {
-        // If we've reached 100% and the request has ended, consider it complete
         if (uploadReached100 && !uploadCompleted) {
             console.log('Request ended after reaching 100%, assuming success');
-            handleCompletion(true, 'Upload complete: ' + file.name);
+            handleCompletion(true, 'TRANSMISSION COMPLETE: ' + file.name);
         }
     });
 
-    // Function to handle completion, regardless of how it happens
     function handleCompletion(success, message) {
-        if (uploadCompleted) return; // Prevent double handling
+        if (uploadCompleted) return;
         uploadCompleted = true;
 
-        // Clear timers
         clearInterval(uploadTimer);
 
-        // Update status
         if (success) {
             progressDiv.className = 'upload-progress success';
-            progressDiv.innerHTML = '✅ ' + message;
-
-            // Reload file list to show the new file
+            progressDiv.innerHTML = `<span>✓ ${message}</span>`;
             loadFiles();
         } else {
             progressDiv.className = 'upload-progress error';
-            progressDiv.innerHTML = '❌ ' + message;
+            progressDiv.innerHTML = `<span>✗ ${message}</span>`;
         }
     }
 
-    // Add event listeners
     xhr.addEventListener('load', function () {
         if (xhr.status >= 200 && xhr.status < 300) {
-            // Successful completion
-            handleCompletion(true, 'Upload complete: ' + file.name);
+            handleCompletion(true, 'TRANSMISSION COMPLETE: ' + file.name);
         } else {
-            // Server returned an error
-            handleCompletion(false, 'Server error: ' + (xhr.responseText || 'Unknown error'));
+            handleCompletion(false, 'SERVER ERROR: ' + (xhr.responseText || 'Unknown error'));
         }
     });
 
     xhr.addEventListener('error', function () {
-        handleCompletion(false, 'Network error during upload');
+        handleCompletion(false, 'NETWORK ERROR');
     });
 
     xhr.addEventListener('timeout', function () {
-        handleCompletion(false, 'Upload timed out');
+        handleCompletion(false, 'TIMEOUT');
     });
 
     xhr.addEventListener('abort', function () {
-        handleCompletion(false, 'Upload was aborted');
+        handleCompletion(false, 'ABORTED');
     });
 
-    // Send the file
     xhr.send(file);
 }
 
@@ -300,32 +454,43 @@ function navigateToDir(path) {
 
                 loadFiles();
             } else {
-                alert('Error: ' + (data.error || 'Could not navigate to directory'));
+                showError('Could not navigate to directory');
             }
         })
         .catch(function (error) {
-            alert('Network error: Could not navigate to directory');
+            showError('Network error');
             console.error('Navigation error:', error);
         });
 }
 
 function deleteFile(path) {
-    if (confirm('Are you sure you want to delete this item?\n' + path)) {
+    if (confirm('DELETE FILE?\n\n' + path + '\n\nThis action cannot be undone.')) {
         fetch('/api/delete?path=' + encodeURIComponent(path), {
             method: 'POST'
         })
             .then(function (response) { return response.json(); })
             .then(function (data) {
                 if (data.success) {
-                    // Refresh the file list
                     loadFiles();
                 } else {
-                    alert('Error deleting file: ' + (data.error || 'Unknown error'));
+                    showError('Error deleting file: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(function (error) {
-                alert('Network error: Could not delete file');
+                showError('Network error');
                 console.error('Delete error:', error);
             });
     }
-} 
+}
+
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'upload-progress error';
+    errorDiv.innerHTML = `<span>✗ ERROR: ${message}</span>`;
+    uploadStatus.innerHTML = '';
+    uploadStatus.appendChild(errorDiv);
+
+    setTimeout(function() {
+        errorDiv.remove();
+    }, 5000);
+}

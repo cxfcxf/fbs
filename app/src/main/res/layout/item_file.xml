@@ -20,10 +20,22 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <!-- File type indicator line -->
+        <View
+            android:id="@+id/typeIndicator"
+            android:layout_width="3dp"
+            android:layout_height="0dp"
+            android:background="@color/primary_dim"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginVertical="8dp" />
+
+        <!-- File icon -->
         <ImageView
             android:id="@+id/fileIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -31,28 +43,34 @@
             app:layout_constraintVertical_chainStyle="packed"
             android:layout_marginTop="8dp" />
 
+        <!-- File name -->
         <TextView
             android:id="@+id/fileName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:layout_marginHorizontal="4dp"
-            android:textSize="11sp"
-            android:textColor="@color/file_text_color"
+            android:textSize="10sp"
+            android:textColor="@color/text_primary"
             android:gravity="center"
             android:maxLines="2"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="monospace"
+            android:shadowColor="@color/glow_green"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="2"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/fileIcon"
             app:layout_constraintBottom_toTopOf="@id/fileDetails" />
-            
+
+        <!-- File size/details -->
         <TextView
             android:id="@+id/fileDetails"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="9sp"
+            android:textSize="8sp"
             android:textColor="@color/text_muted"
             android:fontFamily="monospace"
             app:layout_constraintStart_toStartOf="parent"

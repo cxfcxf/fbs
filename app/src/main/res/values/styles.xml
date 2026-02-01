@@ -1,21 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Modern dark theme for Android TV -->
+    <!-- FBS Retrofuturistic Terminal Theme -->
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
         <!-- Primary branding colors -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent</item>
-        
-        <!-- Background and surface colors -->
+
+        <!-- Background - Pure black for OLED -->
         <item name="android:windowBackground">@color/bg_primary</item>
         <item name="android:colorBackground">@color/bg_primary</item>
-        
+
         <!-- Text colors -->
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
-        
-        <!-- Disable default focus highlight (we use custom) -->
+
+        <!-- Disable default focus highlight -->
         <item name="android:colorFocusedHighlight">@android:color/transparent</item>
+    </style>
+
+    <!-- Terminal-style header text -->
+    <style name="TerminalHeader">
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.15</item>
+    </style>
+
+    <!-- Path display style -->
+    <style name="TerminalPath">
+        <item name="android:textColor">@color/accent</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Status text style -->
+    <style name="TerminalStatus">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
+    <!-- File name in grid -->
+    <style name="FileName">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- File details (size) -->
+    <style name="FileDetails">
+        <item name="android:textColor">@color/text_muted</item>
+        <item name="android:textSize">9sp</item>
+        <item name="android:fontFamily">monospace</item>
     </style>
 </resources>

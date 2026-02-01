@@ -1,12 +1,13 @@
 package com.cxfcxf.androidtvfileserver
 
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageButton
+import android.view.animation.LinearInterpolator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cxfcxf.androidtvfileserver.databinding.ActivityMainBinding
@@ -18,27 +19,49 @@ class UIManager(
     private val fileManager: FileManager
 ) {
     private lateinit var fileAdapter: FileAdapter
-    
+    private var cursorAnimator: ObjectAnimator? = null
+
     interface UIListener {
         fun onNavigateToParentDirectory()
         fun onToggleServer()
         fun onFileSelected(file: File)
         fun onFileDelete(file: File)
     }
-    
+
     private var listener: UIListener? = null
-    
+
     fun setListener(listener: UIListener) {
         this.listener = listener
     }
-    
+
     fun setupUI() {
         setupFileList()
         setupNavigationButtons()
         setupTvNavigation()
-        
+        setupAnimations()
+
         // Initialize server status displays with stopped state
         updateServerStatus("Stopped", null)
+    }
+
+    private fun setupAnimations() {
+        // Blinking cursor animation
+        cursorAnimator = ObjectAnimator.ofFloat(binding.blinkingCursor, "alpha", 1f, 0f).apply {
+            duration = 500
+            repeatMode = ValueAnimator.REVERSE
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
+        }
+
+        // Pulsing status dot animation
+        ObjectAnimator.ofFloat(binding.statusDot, "alpha", 1f, 0.4f).apply {
+            duration = 1000
+            repeatMode = ValueAnimator.REVERSE
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
+        }
     }
     
     fun updateCurrentPath(path: String) {
@@ -47,18 +70,22 @@ class UIManager(
     
     fun updateServerStatus(status: String, url: String?) {
         if (url != null) {
-            binding.serverStatus.text = "Running"
-            binding.serverStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+            binding.serverStatus.text = "ONLINE"
+            binding.serverStatus.setTextColor(Color.parseColor("#00FF88"))
             binding.serverUrl.text = url
             binding.serverUrl.visibility = View.VISIBLE
-            binding.toggleServer.text = "Stop"
+            binding.toggleServer.text = "STOP"
             binding.toggleServer.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_stop, 0, 0, 0)
+            // Update status dot to green
+            binding.statusDot.setBackgroundResource(R.drawable.status_dot)
         } else {
-            binding.serverStatus.text = "Stopped"
-            binding.serverStatus.setTextColor(android.graphics.Color.parseColor("#FFEB3B"))
+            binding.serverStatus.text = "OFFLINE"
+            binding.serverStatus.setTextColor(Color.parseColor("#FFAA00"))
             binding.serverUrl.visibility = View.GONE
-            binding.toggleServer.text = "Start"
+            binding.toggleServer.text = "START"
             binding.toggleServer.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_play, 0, 0, 0)
+            // Update status dot to amber
+            binding.statusDot.setBackgroundResource(R.drawable.status_dot_offline)
         }
     }
     
@@ -85,10 +112,6 @@ class UIManager(
             setHasFixedSize(true)
             isFocusable = true
             isFocusableInTouchMode = true
-            
-            // Set explicit navigation paths for d-pad
-            // Set explicit navigation paths for d-pad (removed hardcoded up)
-            // nextFocusUpId = R.id.parentDirButton
             
             // Make d-pad navigation smoother by setting focus behavior
             descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
@@ -144,8 +167,6 @@ class UIManager(
                             if (viewParent != null) {
                                 val position = recyclerView.getChildAdapterPosition(viewParent)
                                 if (position != RecyclerView.NO_POSITION) {
-                                    // Center the focused item
-                                    val lm = layoutManager as GridLayoutManager
                                     recyclerView.smoothScrollToPosition(position)
                                 }
                             }
@@ -197,66 +218,26 @@ class UIManager(
     }
 
     private fun setupNavigationButtons() {
-        // Add button to go to parent directory
         binding.parentDirButton.setOnClickListener {
             listener?.onNavigateToParentDirectory()
         }
-        
-        // Server toggle button is now in the top navigation area
         binding.toggleServer.setOnClickListener {
             listener?.onToggleServer()
         }
     }
     
     fun setupPermissionButton() {
-        // Add permission request to long-press on parent directory button
         binding.parentDirButton.setOnLongClickListener {
-            listener?.let {
-                return@setOnLongClickListener true
-            }
-            false
+            listener != null
         }
     }
 
     private fun setupTvNavigation() {
-        // Set initial focus for Android TV
         binding.parentDirButton.requestFocus()
-        
-        // Make buttons highlight with green background when focused
-        val focusListener = View.OnFocusChangeListener { view, hasFocus ->
-            if (hasFocus) {
-                // Turn the button background green when focused
-                if (view is Button) {
-                    view.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                        Color.parseColor("#4CAF50") // Green color
-                    )
-                } else if (view is ImageButton) {
-                    view.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                        Color.parseColor("#4CAF50") // Green color
-                    )
-                }
-            } else {
-                // Restore to gray when unfocused
-                if (view is Button) {
-                    view.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                        Color.parseColor("#757575") // Gray color
-                    )
-                } else if (view is ImageButton) {
-                    view.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                        Color.parseColor("#757575") // Gray color
-                    )
-                }
-            }
-        }
-        
-        // Apply the focus listener to navigation buttons
-        binding.parentDirButton.onFocusChangeListener = focusListener
-        binding.toggleServer.onFocusChangeListener = focusListener
-        
-        // Set key listeners for d-pad rotation between buttons
+
+        // Handle d-pad wrap-around navigation between buttons
         binding.root.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN) {
-                // Loop navigation - wrap from last to first element and vice versa
                 when (keyCode) {
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
                         if (binding.toggleServer.hasFocus()) {

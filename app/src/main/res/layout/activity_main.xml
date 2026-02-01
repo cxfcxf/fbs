@@ -4,112 +4,266 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:focusable="false"
-    android:paddingStart="24dp"
-    android:paddingEnd="24dp"
-    android:paddingTop="16dp"
-    android:paddingBottom="16dp"
     android:background="@color/bg_primary">
 
-    <!-- Top bar: Parent, Path, Status, Server Button -->
-    <LinearLayout
-        android:id="@+id/topBar"
+    <!-- Scanline overlay effect -->
+    <View
+        android:id="@+id/scanlineOverlay"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingBottom="12dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/scanline_overlay"
+        android:alpha="0.03"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-        
-        <ImageButton
-            android:id="@+id/parentDirButton"
-            android:layout_width="52dp"
-            android:layout_height="44dp"
-            android:src="@drawable/ic_arrow_up"
-            android:scaleType="centerInside"
-            android:padding="10dp"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:nextFocusRight="@id/toggleServer"
-            android:nextFocusDown="@id/fileList"
-            android:background="@drawable/button_background"
-            android:contentDescription="Go to parent directory" />
-            
-        <TextView
-            android:id="@+id/currentPathText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:text="/"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="@color/accent"
-            android:singleLine="true"
-            android:ellipsize="start" />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
+    <!-- Main content container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Header Section -->
         <LinearLayout
-            android:id="@+id/statusLayout"
-            android:layout_width="wrap_content"
+            android:id="@+id/headerSection"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_vertical|end"
-            android:layout_marginEnd="16dp">
-            
-            <TextView
-                android:id="@+id/serverStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Server: Stopped"
-                android:textSize="13sp"
-                android:textColor="@color/warning" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="16dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-            <TextView
-                android:id="@+id/serverUrl"
+            <!-- Logo and Title -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Status indicator dot -->
+                <View
+                    android:id="@+id/statusDot"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:background="@drawable/status_dot" />
+
+                <!-- App title -->
+                <TextView
+                    android:id="@+id/appTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="FBS"
+                    android:textSize="32sp"
+                    android:textColor="@color/primary"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.2"
+                    android:shadowColor="@color/primary"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="8" />
+
+                <!-- Blinking cursor -->
+                <TextView
+                    android:id="@+id/blinkingCursor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="_"
+                    android:textSize="32sp"
+                    android:textColor="@color/primary"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace" />
+
+                <!-- Version tag -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="v2.0"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_muted"
+                    android:fontFamily="monospace"
+                    android:background="@drawable/version_tag_bg"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp" />
+            </LinearLayout>
+
+            <!-- Server Status Section -->
+            <LinearLayout
+                android:id="@+id/statusSection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=""
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary"
-                android:visibility="gone" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Status info -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="end"
+                    android:layout_marginEnd="20dp">
+
+                    <TextView
+                        android:id="@+id/serverStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="OFFLINE"
+                        android:textSize="14sp"
+                        android:textColor="@color/warning"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.1" />
+
+                    <TextView
+                        android:id="@+id/serverUrl"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:fontFamily="monospace"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <!-- Server toggle button -->
+                <Button
+                    android:id="@+id/toggleServer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:minWidth="120dp"
+                    android:drawableStart="@drawable/ic_play"
+                    android:drawablePadding="12dp"
+                    android:drawableTint="@color/text_primary"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="24dp"
+                    android:gravity="center"
+                    android:text="START"
+                    android:textSize="13sp"
+                    android:textAllCaps="true"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:letterSpacing="0.1"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:nextFocusLeft="@id/parentDirButton"
+                    android:nextFocusDown="@id/fileList"
+                    android:background="@drawable/button_background" />
+            </LinearLayout>
         </LinearLayout>
 
-        <Button
-            android:id="@+id/toggleServer"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:drawableStart="@drawable/ic_play"
-            android:drawablePadding="12dp"
-            android:paddingStart="20dp"
-            android:paddingEnd="28dp"
-            android:gravity="center_vertical|start"
-            android:text="Start"
-            android:textSize="14sp"
-            android:textAllCaps="false"
-            android:textColor="@color/text_primary"
-            android:minWidth="100dp"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:nextFocusLeft="@id/parentDirButton"
-            android:nextFocusDown="@id/fileList"
-            android:background="@drawable/button_background" />
-    </LinearLayout>
+        <!-- Navigation Bar -->
+        <LinearLayout
+            android:id="@+id/navBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/nav_bar_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintTop_toBottomOf="@id/headerSection"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- File grid -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/fileList"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:focusable="true"
-        android:nextFocusUp="@id/parentDirButton"
-        android:clipToPadding="false"
-        android:paddingBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/topBar" />
+            <!-- Parent directory button -->
+            <ImageButton
+                android:id="@+id/parentDirButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@drawable/ic_arrow_up"
+                android:scaleType="centerInside"
+                android:padding="10dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:nextFocusRight="@id/toggleServer"
+                android:nextFocusDown="@id/fileList"
+                android:background="@drawable/button_background"
+                android:contentDescription="Go to parent directory" />
+
+            <!-- Terminal-style path prefix -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="root@tv:"
+                android:textSize="14sp"
+                android:textColor="@color/accent"
+                android:textStyle="bold"
+                android:fontFamily="monospace" />
+
+            <!-- Current path -->
+            <TextView
+                android:id="@+id/currentPathText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="/"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:fontFamily="monospace"
+                android:singleLine="true"
+                android:ellipsize="start"
+                android:shadowColor="@color/glow_green"
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="4" />
+        </LinearLayout>
+
+        <!-- Section header -->
+        <LinearLayout
+            android:id="@+id/sectionHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp"
+            app:layout_constraintTop_toBottomOf="@id/navBar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FILE INDEX"
+                android:textSize="11sp"
+                android:textColor="@color/text_muted"
+                android:textStyle="bold"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.2" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:background="@color/file_item_border" />
+        </LinearLayout>
+
+        <!-- File grid -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/fileList"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:focusable="true"
+            android:nextFocusUp="@id/parentDirButton"
+            android:clipToPadding="false"
+            android:paddingBottom="24dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/sectionHeader" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,37 +4,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Android TV File Server - Upload and browse files on your Android TV">
-    <title>Android TV File Server</title>
-    
+    <title>FBS // File Server</title>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <h1>📺 Android TV File Server</h1>
-        <p class="current-path" id="currentPath">${currentDir}</p>
-    </header>
-    
-    <!-- Upload Section -->
-    <section class="upload-area" id="dropArea">
-        <p>Drag & drop files here or click to upload</p>
-        <input type="file" id="fileInput" style="display: none;" multiple>
-        <button class="upload-button" id="uploadButton">
-            <span>Choose Files</span>
-        </button>
+    <!-- CRT Effects Overlay -->
+    <div class="crt-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Main Container -->
+    <div class="terminal-frame">
+        <!-- Header -->
+        <header class="terminal-header">
+            <div class="header-left">
+                <div class="status-indicator"></div>
+                <h1>FBS<span class="blink">_</span></h1>
+                <span class="version-tag">v2.0</span>
+            </div>
+            <div class="header-right">
+                <div class="stats">
+                    <span class="stat-item"><span class="stat-label">STATUS</span><span class="stat-value online">ONLINE</span></span>
+                    <span class="stat-item"><span class="stat-label">PORT</span><span class="stat-value">8080</span></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav">
+            <span class="nav-prefix">root@android-tv:</span>
+            <span class="current-path" id="currentPath">/storage/emulated/0</span>
+        </nav>
+
+        <!-- Upload Section -->
+        <section class="upload-zone" id="dropArea">
+            <div class="upload-inner">
+                <div class="upload-icon">
+                    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M32 44V20M32 20L22 30M32 20L42 30" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8 44V52C8 54.2091 9.79086 56 12 56H52C54.2091 56 56 54.2091 56 52V44" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="upload-text">
+                    <span class="upload-title">TRANSMIT FILES</span>
+                    <span class="upload-subtitle">Drop files here or click to select</span>
+                </div>
+                <input type="file" id="fileInput" multiple>
+                <button class="upload-btn" id="uploadButton">
+                    <span class="btn-text">SELECT FILES</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+            <div class="upload-corners">
+                <span class="corner tl"></span>
+                <span class="corner tr"></span>
+                <span class="corner bl"></span>
+                <span class="corner br"></span>
+            </div>
+        </section>
+
+        <!-- Upload Status -->
         <div class="upload-status" id="uploadStatus"></div>
-    </section>
-    
-    <!-- File Browser -->
-    <section class="file-list" id="fileList">
-        <!-- Files will be loaded here dynamically -->
-    </section>
-    
+
+        <!-- File Browser -->
+        <section class="file-browser">
+            <div class="browser-header">
+                <span class="browser-title">FILE INDEX</span>
+                <span class="file-count" id="fileCount">0 items</span>
+            </div>
+            <div class="file-list" id="fileList">
+                <!-- Files will be loaded here dynamically -->
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="terminal-footer">
+            <span class="footer-text">ANDROID TV FILE SERVER // ACTIVE SESSION</span>
+            <span class="footer-time" id="footerTime"></span>
+        </footer>
+    </div>
+
     <script src="/scripts.js"></script>
 </body>
 </html>
